@@ -1,0 +1,21 @@
+version: '3'
+services:
+  openresty:
+    image: openresty/openresty:alpine
+    ports:
+      - "8080:80" 
+    volumes:
+      - ./openresty/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - flask-app
+  flask-app:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=production
+    ports:
+      - "8000:8000"
+networks:
+  default:
+    driver: bridge

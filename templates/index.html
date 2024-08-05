@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工具聚合网站</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .card {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .card:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>欢迎来到工具聚合网站</h1>
+        <p>这里将是各种工具的列表。</p>
+        <div class="card" id="pinyinConverter">
+            <h2>汉字转拼音</h2>
+            <p>点击这里转换汉字为拼音</p>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('pinyinConverter').addEventListener('click', function() {
+            let input = prompt("请输入汉字（多个词组用半角逗号分隔）：");
+            if (input) {
+                fetch('/convert_pinyin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({text: input}),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').textContent = data.result.join('\n');
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('转换失败，请重试');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
