@@ -6,52 +6,68 @@
     <title>工具聚合网站</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .container {
             max-width: 800px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 90%;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         h1 {
-            color: #333;
+            color: #4a4a4a;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
         }
         .card {
-            background-color: #007bff;
+            background: linear-gradient(45deg, #007bff, #00c6ff);
             color: #fff;
             padding: 20px;
             margin-top: 20px;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .card:hover {
-            background-color: #0056b3;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            margin-top: 0;
         }
         #result {
-            margin-top: 20px;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
             white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>欢迎来到工具聚合网站</h1>
-        <p>这里将是各种工具的列表。</p>
+        <h1>工具聚合网站</h1>
+        <p style="text-align: center; color: #666;">在这里，您可以找到各种有用的工具。</p>
         <div class="card" id="pinyinConverter">
             <h2>汉字转拼音</h2>
             <p>点击这里转换汉字为拼音</p>
         </div>
         <div id="result"></div>
     </div>
-
+    
     <script>
         document.getElementById('pinyinConverter').addEventListener('click', function() {
             let input = prompt("请输入汉字（多个词组用半角逗号分隔）：");
