@@ -13,16 +13,16 @@ def convert_pinyin():
     text = data.get('text', '')
     names = text.split(',')
     
-    def convert_name_to_pinyin(name):
+    def convert_to_pinyin(name):
         name_parts = name.strip().split()
         pinyin_parts = []
         for part in name_parts:
             pinyin_list = pinyin(part, style=Style.NORMAL)
-            pinyin_part = ''.join([syllable[0].capitalize() + syllable[1:] for syllable in pinyin_list])
+            pinyin_part = ''.join([syllable[0] for syllable in pinyin_list])
             pinyin_parts.append(pinyin_part)
         return ' '.join(pinyin_parts)
 
-    result = [convert_name_to_pinyin(name) for name in names]
+    result = [convert_to_pinyin(name) for name in names]
     return jsonify({'result': result})
 
 if __name__ == '__main__':
