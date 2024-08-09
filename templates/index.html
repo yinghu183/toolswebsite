@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工具聚合网站</title>
     <style>
+        /* 保留原有样式 */
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
@@ -137,6 +138,7 @@
         var btn = document.getElementById("pinyinConverter");
         var span = document.getElementsByClassName("close")[0];
         var convertBtn = document.getElementById("convertBtn");
+        var resultDiv = document.getElementById("result");
 
         btn.onclick = function() {
             modal.style.display = "block";
@@ -162,15 +164,26 @@
                     },
                     body: JSON.stringify({text: input}),
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    document.getElementById('result').textContent = data.result.join('\n');
+                    if (data.result && Array.isArray(data.result)) {
+                        resultDiv.textContent = data.result.join('\n');
+                    } else {
+                        resultDiv.textContent = '转换结果格式不正确';
+                    }
                     modal.style.display = "none";
                 })
                 .catch((error) => {
                     console.error('Error:', error);
-                    alert('转换失败，请重试');
+                    resultDiv.textContent = '转换失败，请重试';
                 });
+            } else {
+                resultDiv.textContent = '请输入汉字';
             }
         }
     </script>
