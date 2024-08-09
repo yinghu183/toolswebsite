@@ -11,13 +11,18 @@ def home():
 def convert_pinyin():
     data = request.json
     text = data.get('text', '')
-    words = text.split(',')
+    names = text.split(',')
     
-    def convert_to_pinyin(word):
-        pinyin_list = pinyin(word.strip(), style=Style.NORMAL)
-        return ' '.join([''.join([syllable.capitalize() for syllable in word]) for word in pinyin_list])
+    def convert_name_to_pinyin(name):
+        name_parts = name.strip().split()
+        pinyin_parts = []
+        for part in name_parts:
+            pinyin_list = pinyin(part, style=Style.NORMAL)
+            pinyin_part = ''.join([syllable[0].capitalize() + syllable[1:] for syllable in pinyin_list])
+            pinyin_parts.append(pinyin_part)
+        return ' '.join(pinyin_parts)
 
-    result = [convert_to_pinyin(word) for word in words]
+    result = [convert_name_to_pinyin(name) for name in names]
     return jsonify({'result': result})
 
 if __name__ == '__main__':
