@@ -21,6 +21,17 @@ COMPOUND_SURNAMES = sorted([
   "褚师", "吴铭"
 ], key=len, reverse=True)
 
+# 处理常见的多音字（根据具体应用场景可能需要扩展这个列表）
+MULTITONE_WORDS = {
+    '单': 'Shan',
+    '重': 'Chong',
+    '任': 'Ren',
+    '解': 'Xie',
+    '长': 'Chang',
+    '乐': 'Yue',
+    # 可以根据需要添加更多词汇
+}
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -65,10 +76,14 @@ def convert_to_pinyin(name):
     surname = next((s for s in COMPOUND_SURNAMES if name.startswith(s)), name[0])
     given_name = name[len(surname):]
 
-    # 转换姓氏拼音
-    surname_pinyin = ''.join([syllable.capitalize() for syllable in lazy_pinyin(surname, style=Style.NORMAL)])
+    # 处理姓氏的多音字情况
+    surname_pinyin = MULTITONE_WORDS.get(surname, None)
+    if not surname_pinyin:
+        surname_pinyin = ''.join([syllable.capitalize() for syllable in lazy_pinyin(surname, style=Style.NORMAL)])
+    else:
+        surname_pinyin = surname_pinyin.capitalize()
 
-    # 转换名字拼音
+    # 处理名字拼音
     given_name_pinyin = ''.join([syllable.capitalize() for syllable in lazy_pinyin(given_name, style=Style.NORMAL)])
 
     # 组合姓和名，中间加空格
