@@ -18,7 +18,7 @@ def convert_pinyin():
         pinyin_parts = []
         for part in name_parts:
             pinyin_list = pinyin(part, style=Style.NORMAL)
-            pinyin_part = ''.join([syllable[0] for syllable in pinyin_list])
+            pinyin_part = ''.join([syllable[0].capitalize() + syllable[1:] for syllable in pinyin_list])
             pinyin_parts.append(pinyin_part)
         return ' '.join(pinyin_parts)
 
