@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from pypinyin import pinyin, Style
 
-def handle_request():
+def handle_request(request):
     try:
         data = request.json
         text = data.get('text', '')

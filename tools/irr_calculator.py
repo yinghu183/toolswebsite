@@ -14,7 +14,7 @@ def calculate_irr(principal, payment, periods, n=12, precision=1e-6):
     
     return (low + high) / 2
 
-def handle_request():
+def handle_request(request):
     try:
         data = request.json
         principal = float(data['principal'])
