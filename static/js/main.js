@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(toolForm);
             const data = Object.fromEntries(formData.entries());
 
-            // 确保数值类型的输入被转换为数字
             if (toolName === 'Irr Calculator') {
                 data.principal = parseFloat(data.principal);
                 data.payment = parseFloat(data.payment);
@@ -62,8 +61,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                const toolResult = document.getElementById('toolResult');
                 if (data.error) {
-                    document.getElementById('toolResult').innerHTML = `<p style="color: red;">${data.error}</p>`;
+                    toolResult.innerHTML = `<p style="color: red;">${data.error}</p>`;
                 } else {
                     let result = '';
                     if (toolName === 'Pinyin Converter') {
@@ -71,8 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (toolName === 'Irr Calculator') {
                         result = `年化IRR: ${data.result.annual_irr}<br>月化IRR: ${data.result.monthly_irr}`;
                     }
-                    document.getElementById('toolResult').innerHTML = `<p>${result}</p>`;
+                    toolResult.innerHTML = `<p>${result}</p>`;
                 }
+                toolResult.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error:', error);

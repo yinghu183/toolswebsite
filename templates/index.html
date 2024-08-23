@@ -4,19 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工具聚合网站</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>工具聚合网站</h1>
-        <div id="tools">
-            {% for tool in tools %}
-            <div class="card" data-tool="{{ tool.name }}">
-                <h2>{{ tool.display_name }}</h2>
+        <header>
+            <h1>工具聚合网站</h1>
+        </header>
+        <main>
+            <div id="tools">
+                {% for tool in tools %}
+                <div class="card" data-tool="{{ tool.name }}">
+                    <h2>{{ tool.display_name }}</h2>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        <div id="result"></div>
+            <div id="result"></div>
+        </main>
+        <footer>
+            <p>&copy; 2024 工具聚合网站. 保留所有权利。</p>
+        </footer>
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
