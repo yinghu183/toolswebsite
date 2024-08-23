@@ -49,14 +49,17 @@ def calculate_irr():
       logging.debug(f"收到IRR计算请求: principal={principal}, payment={payment}, periods={periods}")
 
       result = calculate_real_irr(principal, payment, periods)
-      return jsonify({'result': result})
+      return jsonify({'result': {
+          'annual_irr': f"{result['annual_irr']*100:.2f}%",
+          'monthly_irr': f"{result['monthly_irr']*100:.2f}%"
+      }})
 
   except ValueError as ve:
       logging.error(f"IRR计算出现值错误: {str(ve)}")
       return jsonify({'error': str(ve)}), 400
   except Exception as e:
       logging.error(f"IRR计算出现意外错误: {str(e)}")
-      return jsonify({'error': '发生意外错误'}), 500
+      return jsonify({'error': '发生意外错误，请检查输入数据'}), 500
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=8000, debug=True)

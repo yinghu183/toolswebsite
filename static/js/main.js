@@ -31,11 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (toolName === 'Irr Calculator') {
             inputFields.innerHTML = `
                 <label for="principal">本金:</label>
-                <input type="number" id="principal" name="principal" required><br>
+                <input type="number" id="principal" name="principal" step="0.01" required><br>
                 <label for="payment">每期还款额:</label>
-                <input type="number" id="payment" name="payment" required><br>
+                <input type="number" id="payment" name="payment" step="0.01" required><br>
                 <label for="periods">还款期数:</label>
-                <input type="number" id="periods" name="periods" required><br>
+                <input type="number" id="periods" name="periods" step="1" required><br>
             `;
         }
 
@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData(toolForm);
             const data = Object.fromEntries(formData.entries());
+
+            // 确保数值类型的输入被转换为数字
+            if (toolName === 'Irr Calculator') {
+                data.principal = parseFloat(data.principal);
+                data.payment = parseFloat(data.payment);
+                data.periods = parseInt(data.periods);
+            }
 
             let endpoint = toolName === 'Pinyin Converter' ? '/convert_pinyin' : '/calculate_irr';
 
@@ -59,12 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('toolResult').innerHTML = `<p style="color: red;">${data.error}</p>`;
                 } else {
                     let result = '';
-                    if (Array.isArray(data.result)) {
-                        result = data.result.join('<br>');
-                    } else if (typeof data.result === 'object') {
-                        result = `年化IRR: ${(data.result.annual_irr * 100).toFixed(2)}%<br>月化IRR: ${(data.result.monthly_irr * 100).toFixed(2)}%`;
-                    } else {
-                        result = data.result;
+                    if (toolName === 'Pinyin Converter') {
+                        result = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
+                    } else if (toolName === 'Irr Calculator') {
+                        result = `年化IRR: ${data.result.annual_irr}<br>月化IRR: ${data.result.monthly_irr}`;
                     }
                     document.getElementById('toolResult').innerHTML = `<p>${result}</p>`;
                 }
