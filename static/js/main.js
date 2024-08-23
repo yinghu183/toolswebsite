@@ -44,7 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(toolForm);
             const data = Object.fromEntries(formData.entries());
 
-            fetch(`/api/${toolName}`, {
+            let endpoint = toolName === 'Pinyin Converter' ? '/convert_pinyin' : '/calculate_irr';
+
+            fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,7 +58,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.error) {
                     document.getElementById('toolResult').innerHTML = `<p style="color: red;">${data.error}</p>`;
                 } else {
-                    document.getElementById('toolResult').innerHTML = `<p>${data.result}</p>`;
+                    let result = '';
+                    if (Array.isArray(data.result)) {
+                        result = data.result.join('<br>');
+                    } else if (typeof data.result === 'object') {
+                        result = `年化IRR: ${(data.result.annual_irr * 100).toFixed(2)}%<br>月化IRR: ${(data.result.monthly_irr * 100).toFixed(2)}%`;
+                    } else {
+                        result = data.result;
+                    }
+                    document.getElementById('toolResult').innerHTML = `<p>${result}</p>`;
                 }
             })
             .catch(error => {

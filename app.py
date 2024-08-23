@@ -1,41 +1,62 @@
-from flask import Flask, render_template, jsonify, request
-import importlib
-import os
+from flask import Flask, render_template, request, jsonify
+from tools.pinyin_converter import process_names
+from tools.irr_calculator import calculate_real_irr
+import logging
 
 app = Flask(__name__)
 
-# 动态加载工具
-tools = {}
-tools_dir = os.path.join(os.path.dirname(__file__), 'tools')
-for filename in os.listdir(tools_dir):
-    if filename.endswith('.py') and not filename.startswith('__'):
-        module_name = filename[:-3]
-        module = importlib.import_module(f'tools.{module_name}')
-        if hasattr(module, 'handle_request'):
-            tool_name = module_name.replace('_', ' ').title()
-            tools[tool_name.lower()] = getattr(module, 'handle_request')
+# 设置日志
+logging.basicConfig(level=logging.DEBUG)
 
-print("Loaded tools:", list(tools.keys()))
+# 工具列表
+TOOLS = [
+  {"name": "Pinyin Converter", "display_name": "拼音转换器"},
+  {"name": "Irr Calculator", "display_name": "IRR 计算器"}
+]
 
 @app.route('/')
 def home():
-    return render_template('index.html', tools=tools.keys())
+  return render_template('index.html', tools=TOOLS)
 
-@app.route('/api/<tool_name>', methods=['POST'])
-def api_endpoint(tool_name):
-    print(f"Received request for tool: {tool_name}")
-    print(f"Available tools: {list(tools.keys())}")
-    
-    tool_func = tools.get(tool_name.lower())
-    if tool_func:
-        try:
-            return tool_func(request)
-        except Exception as e:
-            print(f"Error executing {tool_name}: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-    
-    print(f"Tool not found: {tool_name}")
-    return jsonify({'error': 'Tool not found'}), 404
+@app.route('/convert_pinyin', methods=['POST'])
+def convert_pinyin():
+  try:
+      data = request.json
+      if not data or 'text' not in data:
+          return jsonify({'error': '未提供文本'}), 400
+
+      text = data['text']
+      logging.debug(f"收到拼音转换请求: {text}")
+
+      result = process_names(text)
+      return jsonify({'result': result})
+
+  except Exception as e:
+      logging.error(f"拼音转换出现意外错误: {str(e)}")
+      return jsonify({'error': '发生意外错误'}), 500
+
+@app.route('/calculate_irr', methods=['POST'])
+def calculate_irr():
+  try:
+      data = request.json
+      if not data or 'principal' not in data or 'payment' not in data or 'periods' not in data:
+          return jsonify({'error': '缺少必要参数'}), 400
+
+      principal = float(data['principal'])
+      payment = float(data['payment'])
+      periods = int(data['periods'])
+
+      logging.debug(f"收到IRR计算请求: principal={principal}, payment={payment}, periods={periods}")
+
+      result = calculate_real_irr(principal, payment, periods)
+      return jsonify({'result': result})
+
+  except ValueError as ve:
+      logging.error(f"IRR计算出现值错误: {str(ve)}")
+      return jsonify({'error': str(ve)}), 400
+  except Exception as e:
+      logging.error(f"IRR计算出现意外错误: {str(e)}")
+      return jsonify({'error': '发生意外错误'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+  app.run(host='0.0.0.0', port=8000, debug=True)
