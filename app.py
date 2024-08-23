@@ -11,8 +11,9 @@ for filename in os.listdir(tools_dir):
     if filename.endswith('.py') and not filename.startswith('__'):
         module_name = filename[:-3]
         module = importlib.import_module(f'tools.{module_name}')
-        tool_name = module_name.replace('_', ' ').title()
-        tools[tool_name] = getattr(module, 'handle_request')
+        if hasattr(module, 'handle_request'):
+            tool_name = module_name.replace('_', ' ').title()
+            tools[tool_name] = getattr(module, 'handle_request')
 
 @app.route('/')
 def home():
