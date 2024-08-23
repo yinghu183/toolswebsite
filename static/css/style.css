@@ -11,18 +11,22 @@ body {
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    background-color: var(--background-color);
-    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #3498db, #2c3e50);
+    color: #333333;
 }
 
 .container {
+    flex: 1;
     max-width: 1000px;
     margin: auto;
     padding: 20px;
 }
 
 header {
-    background-color: var(--primary-color);
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
     text-align: center;
     padding: 1rem;
@@ -42,13 +46,17 @@ h1 {
 }
 
 .card {
-    background: var(--card-color);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 8px;
     padding: 20px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
 }
 
 .card:hover {
@@ -57,8 +65,8 @@ h1 {
 }
 
 .card h2 {
-    color: var(--secondary-color);
-    margin-top: 0;
+    color: #2c3e50;
+    margin: 0;
 }
 
 form {
@@ -112,9 +120,8 @@ button:hover {
 
 footer {
     text-align: center;
-    margin-top: 2rem;
     padding: 1rem;
-    background-color: var(--secondary-color);
+    background-color: rgba(44, 62, 80, 0.8);
     color: white;
-    border-radius: 5px;
+    width: 100%;
 }
