@@ -13,6 +13,10 @@
             <h1>工具聚合网站</h1>
         </header>
         <main>
+            <h2>AI 工具</h2>
+            <div id="ai-tools">
+                <!-- AI tool cards will be added here by JavaScript -->
+            </div>
             <div id="tools">
                 {% for tool in tools %}
                 <div class="card" data-tool="{{ tool.name }}">
@@ -27,5 +31,17 @@
         <p>&copy; 2023 工具聚合网站. 保留所有权利。</p>
     </footer>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Dify chatbot script -->
+    <script>
+        window.difyChatbotConfig = {
+            token: 'Jwla83F8CmWY0S3M',
+            baseUrl: 'http://dify.141010.xyz'
+        }
+    </script>
+    <script
+        src="http://dify.141010.xyz/embed.min.js"
+        id="Jwla83F8CmWY0S3M"
+        defer>
+    </script>
 </body>
 </html>

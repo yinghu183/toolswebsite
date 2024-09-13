@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const toolsContainer = document.getElementById('tools');
+    const aiToolsContainer = document.getElementById('ai-tools');
+    const externalLinksContainer = document.getElementById('external-links');
     const resultDiv = document.getElementById('result');
 
     toolsContainer.addEventListener('click', function(e) {
@@ -81,4 +83,71 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Add AI tools
+    const aiTools = [
+        { name: 'AI Assistant', id: 'Jwla83F8CmWY0S3M' },
+        // Add more AI tools here
+    ];
+
+    aiTools.forEach(tool => {
+        aiToolsContainer.innerHTML += `
+            <div class="card ai-tool" data-tool-id="${tool.id}">
+                <h2>${tool.name}</h2>
+                <button>打开</button>
+            </div>
+        `;
+    });
+
+    // Add external links
+    const externalLinks = [
+        { name: '百度', url: 'https://www.baidu.com' },
+        { name: 'Google', url: 'https://www.google.com' },
+        // Add more external links here
+    ];
+
+    externalLinks.forEach(link => {
+        externalLinksContainer.innerHTML += `
+            <div class="card external-link">
+                <h2>${link.name}</h2>
+                <a href="${link.url}" target="_blank">访问</a>
+            </div>
+        `;
+    });
+
+    // Event listener for AI tools
+    aiToolsContainer.addEventListener('click', function(e) {
+        if (e.target.tagName === 'BUTTON') {
+            const card = e.target.closest('.card');
+            if (card) {
+                const toolId = card.dataset.toolId;
+                openAITool(toolId);
+            }
+        }
+    });
+
+    function openAITool(toolId) {
+        resultDiv.innerHTML = `
+            <div id="ai-tool-container" style="width: 100%; height: 500px;"></div>
+        `;
+        // Reset any existing chatbot
+        if (window.DifyChat) {
+            window.DifyChat.destroy();
+        }
+        // Initialize new chatbot
+        window.difyChatbotConfig = {
+            token: toolId,
+            baseUrl: 'http://dify.141010.xyz',
+            containerSelector: '#ai-tool-container'
+        };
+        // Load the Dify script dynamically
+        const script = document.createElement('script');
+        script.src = 'http://dify.141010.xyz/embed.min.js';
+        script.onload = function() {
+            window.DifyChat.init(window.difyChatbotConfig);
+        };
+        document.body.appendChild(script);
+    }
+
+    // ... existing code for regular tools ...
 });
