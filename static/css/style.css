@@ -157,10 +157,29 @@ footer {
     padding: 20px;
     border: 1px solid #888;
     width: 90%;
-    max-width: 600px;
+    max-width: 800px;
+    height: 85vh;
+    max-height: 850px;
     border-radius: 8px;
-    max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#modal-body {
+    flex-grow: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#modal-body h2 {
+    margin-top: 0;
+}
+
+#modal-body iframe {
+    flex-grow: 1;
+    min-height: 700px;
 }
 
 .close {
@@ -196,5 +215,15 @@ footer {
     .card {
         aspect-ratio: auto;
         min-height: 80px;
+    }
+
+    .modal-content {
+        width: 95%;
+        height: 90vh;
+        margin: 5% auto;
+    }
+
+    #modal-body iframe {
+        min-height: 500px;
     }
 }

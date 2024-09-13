@@ -110,43 +110,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadAITool(aiTool) {
         modalBody.innerHTML = ''; // 清空模态框内容
 
-        let config = document.createElement('script');
-        config.type = 'text/javascript';
-        
         let token;
+        let title;
         switch(aiTool) {
             case 'a':
                 token = 'XGNUclyu0yzj5eMm';
+                title = '作文润色';
                 break;
             case 'b':
                 token = 'Jwla83F8CmWY0S3M';
+                title = '英语词典';
                 break;
             case 'c':
                 token = 'YTsXdjIJmlspSSA1';
+                title = '多语言翻译';
                 break;
         }
         
-        config.innerHTML = `
-            window.difyChatbotConfig = {
-                token: '${token}',
-                baseUrl: 'http://dify.141010.xyz'
-            }
-        `;
+        let iframe = document.createElement('iframe');
+        iframe.src = `http://dify.141010.xyz/chatbot/${token}`;
+        iframe.style.width = '100%';
+        iframe.style.height = '700px';
+        iframe.style.border = 'none';
+        iframe.allow = 'microphone';
         
-        modalBody.appendChild(config);
-
-        let embedScript = document.createElement('script');
-        embedScript.src = 'http://dify.141010.xyz/embed.min.js';
-        embedScript.id = token;
-        embedScript.defer = true;
+        let titleElement = document.createElement('h2');
+        titleElement.textContent = title;
+        titleElement.style.textAlign = 'center';
+        titleElement.style.marginBottom = '20px';
         
-        modalBody.appendChild(embedScript);
-
-        // 给脚本一些时间来加载和初始化
-        setTimeout(() => {
-            if (!modalBody.querySelector('#dify-chatbot-wrapper')) {
-                modalBody.innerHTML += '<p>AI 工具加载失败，请稍后再试。</p>';
-            }
-        }, 3000);
+        modalBody.appendChild(titleElement);
+        modalBody.appendChild(iframe);
     }
 });
