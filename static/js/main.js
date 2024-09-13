@@ -1,76 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     const toolsContainer = document.getElementById('tools');
-    const aiToolsContainer = document.getElementById('ai-tools');
-    const externalLinksContainer = document.getElementById('external-links');
-    const modal = document.getElementById('modal');
-    const modalBody = document.getElementById('modal-body');
-    const closeBtn = document.getElementsByClassName('close')[0];
+    const resultDiv = document.getElementById('result');
 
-    // Add AI tools
-    const aiTools = [
-        { name: 'AI Assistant', id: 'Jwla83F8CmWY0S3M' },
-        // Add more AI tools here
-    ];
-
-    aiTools.forEach(tool => {
-        aiToolsContainer.innerHTML += `
-            <div class="card ai-tool" data-tool-id="${tool.id}">
-                <h3>${tool.name}</h3>
-            </div>
-        `;
-    });
-
-    // Add external links
-    const externalLinks = [
-        { name: '百度', url: 'https://www.baidu.com' },
-        { name: 'Google', url: 'https://www.google.com' },
-        // Add more external links here
-    ];
-
-    externalLinks.forEach(link => {
-        externalLinksContainer.innerHTML += `
-            <div class="card external-link" data-url="${link.url}">
-                <h3>${link.name}</h3>
-            </div>
-        `;
-    });
-
-    // Event listeners for all tools
-    document.addEventListener('click', function(e) {
+    toolsContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.card');
         if (card) {
-            if (card.classList.contains('ai-tool')) {
-                openAITool(card.dataset.toolId);
-            } else if (card.classList.contains('external-link')) {
-                window.open(card.dataset.url, '_blank');
-            } else {
-                loadToolInterface(card.dataset.tool);
-            }
+            const toolName = card.dataset.tool;
+            loadToolInterface(toolName);
         }
     });
 
-    function openAITool(toolId) {
-        modalBody.innerHTML = `
-            <div id="ai-tool-container" style="width: 100%; height: 500px;"></div>
-        `;
-        modal.style.display = 'block';
-        
-        window.difyChatbotConfig = {
-            token: toolId,
-            baseUrl: 'http://dify.141010.xyz',
-            containerSelector: '#ai-tool-container'
-        };
-        
-        const script = document.createElement('script');
-        script.src = 'http://dify.141010.xyz/embed.min.js';
-        script.onload = function() {
-            window.DifyChat.init(window.difyChatbotConfig);
-        };
-        document.body.appendChild(script);
-    }
-
     function loadToolInterface(toolName) {
-        modalBody.innerHTML = `
+        resultDiv.innerHTML = `
             <h3>${toolName}</h3>
             <form id="toolForm">
                 <div id="inputFields"></div>
@@ -78,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </form>
             <div id="toolResult"></div>
         `;
-        modal.style.display = 'block';
 
         const inputFields = document.getElementById('inputFields');
         const toolForm = document.getElementById('toolForm');
@@ -99,64 +39,46 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
 
-        toolForm.addEventListener('submit', handleToolSubmit);
-    }
+        toolForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(toolForm);
+            const data = Object.fromEntries(formData.entries());
 
-    function handleToolSubmit(e) {
-        e.preventDefault();
-        const formData = new FormData(toolForm);
-        const data = Object.fromEntries(formData.entries());
+            if (toolName === 'Irr Calculator') {
+                data.principal = parseFloat(data.principal);
+                data.payment = parseFloat(data.payment);
+                data.periods = parseInt(data.periods);
+            }
 
-        if (toolName === 'Irr Calculator') {
-            data.principal = parseFloat(data.principal);
-            data.payment = parseFloat(data.payment);
-            data.periods = parseInt(data.periods);
-        }
+            let endpoint = toolName === 'Pinyin Converter' ? '/convert_pinyin' : '/calculate_irr';
 
-        let endpoint = toolName === 'Pinyin Converter' ? '/convert_pinyin' : '/calculate_irr';
-
-        fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(data => {
-            const toolResult = document.getElementById('toolResult');
-            if (data.error) {
-                toolResult.innerHTML = `<p style="color: red;">${data.error}</p>`;
-            } else {
-                let result = '';
-                if (toolName === 'Pinyin Converter') {
-                    result = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
-                } else if (toolName === 'Irr Calculator') {
-                    result = `年化IRR: ${data.result.annual_irr}<br>月化IRR: ${data.result.monthly_irr}`;
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const toolResult = document.getElementById('toolResult');
+                if (data.error) {
+                    toolResult.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                } else {
+                    let result = '';
+                    if (toolName === 'Pinyin Converter') {
+                        result = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
+                    } else if (toolName === 'Irr Calculator') {
+                        result = `年化IRR: ${data.result.annual_irr}<br>月化IRR: ${data.result.monthly_irr}`;
+                    }
+                    toolResult.innerHTML = `<p>${result}</p>`;
                 }
-                toolResult.innerHTML = `<p>${result}</p>`;
-            }
-            toolResult.style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('toolResult').innerHTML = '<p style="color: red;">操作出错，请重试</p>';
+                toolResult.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('toolResult').innerHTML = '<p style="color: red;">操作出错，请重试</p>';
+            });
         });
-    }
-
-    closeBtn.onclick = function() {
-        modal.style.display = 'none';
-        if (window.DifyChat) {
-            window.DifyChat.destroy();
-        }
-    }
-
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-            if (window.DifyChat) {
-                window.DifyChat.destroy();
-            }
-        }
     }
 });
