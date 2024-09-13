@@ -37,12 +37,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadToolInterface(toolName) {
         modalBody.innerHTML = `
-            <h3>${toolName}</h3>
-            <form id="toolForm">
-                <div id="inputFields"></div>
-                <button type="submit">执行</button>
-            </form>
-            <div id="toolResult"></div>
+            <h2>${toolName}</h2>
+            <div class="tool-container">
+                <form id="toolForm" class="tool-form">
+                    <div id="inputFields"></div>
+                    <button type="submit" class="submit-btn">执行</button>
+                </form>
+                <div id="toolResult" class="tool-result"></div>
+            </div>
         `;
 
         const inputFields = document.getElementById('inputFields');
@@ -51,16 +53,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (toolName === 'Pinyin Converter') {
             inputFields.innerHTML = `
                 <label for="text">输入汉字:</label>
-                <textarea id="text" name="text" required></textarea><br>
+                <textarea id="text" name="text" required></textarea>
             `;
         } else if (toolName === 'Irr Calculator') {
             inputFields.innerHTML = `
                 <label for="principal">本金:</label>
-                <input type="number" id="principal" name="principal" step="0.01" required><br>
+                <input type="number" id="principal" name="principal" step="0.01" required>
                 <label for="payment">每期还款额:</label>
-                <input type="number" id="payment" name="payment" step="0.01" required><br>
+                <input type="number" id="payment" name="payment" step="0.01" required>
                 <label for="periods">还款期数:</label>
-                <input type="number" id="periods" name="periods" step="1" required><br>
+                <input type="number" id="periods" name="periods" step="1" required>
             `;
         }
 
@@ -88,21 +90,21 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const toolResult = document.getElementById('toolResult');
                 if (data.error) {
-                    toolResult.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                    toolResult.innerHTML = `<p class="error">${data.error}</p>`;
                 } else {
                     let result = '';
                     if (toolName === 'Pinyin Converter') {
                         result = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
                     } else if (toolName === 'Irr Calculator') {
-                        result = `年化IRR: ${data.result.annual_irr}<br>月化IRR: ${data.result.monthly_irr}`;
+                        result = `<p>年化IRR: ${data.result.annual_irr}</p><p>月化IRR: ${data.result.monthly_irr}</p>`;
                     }
-                    toolResult.innerHTML = `<p>${result}</p>`;
+                    toolResult.innerHTML = result;
                 }
                 toolResult.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('toolResult').innerHTML = '<p style="color: red;">操作出错，请重试</p>';
+                document.getElementById('toolResult').innerHTML = '<p class="error">操作出错，请重试</p>';
             });
         });
     }
@@ -134,23 +136,12 @@ document.addEventListener('DOMContentLoaded', function() {
         iframe.style.border = 'none';
         iframe.allow = 'microphone';
         
-        let headerDiv = document.createElement('div');
-        headerDiv.className = 'modal-header';
-        
         let titleElement = document.createElement('h2');
         titleElement.textContent = title;
+        titleElement.style.textAlign = 'center';
+        titleElement.style.marginBottom = '20px';
         
-        let clearButton = document.createElement('button');
-        clearButton.textContent = '清除历史记录';
-        clearButton.className = 'clear-history';
-        clearButton.onclick = function() {
-            iframe.src = iframe.src;
-        };
-        
-        headerDiv.appendChild(titleElement);
-        headerDiv.appendChild(clearButton);
-        
-        modalBody.appendChild(headerDiv);
+        modalBody.appendChild(titleElement);
         modalBody.appendChild(iframe);
     }
 });

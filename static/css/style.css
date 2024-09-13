@@ -157,6 +157,14 @@ h1 {
     min-height: 500px;
 }
 
+.tool-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
 .tool-form {
     display: flex;
     flex-direction: column;
@@ -170,24 +178,53 @@ h1 {
 
 .tool-form input,
 .tool-form textarea {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
     border-radius: 4px;
     font-size: 1rem;
+    transition: border-color 0.3s ease;
 }
 
-.tool-form button {
+.tool-form input:focus,
+.tool-form textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.submit-btn {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    font-size: 1rem;
+    font-weight: bold;
+    align-self: flex-start;
 }
 
-.tool-form button:hover {
+.submit-btn:hover {
     background-color: var(--secondary-color);
+}
+
+.tool-result {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.error {
+    color: #d32f2f;
+    font-weight: bold;
+}
+
+#modal-body h2 {
+    color: var(--secondary-color);
+    text-align: center;
+    margin-bottom: 2rem;
 }
 
 #toolResult {
