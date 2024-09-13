@@ -36,35 +36,56 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadToolInterface(toolName) {
-        modalBody.innerHTML = `
-            <h2>${toolName}</h2>
-            <div class="tool-container">
-                <form id="toolForm" class="tool-form">
-                    <div id="inputFields"></div>
-                    <button type="submit" class="submit-btn">执行</button>
-                </form>
-                <div id="toolResult" class="tool-result"></div>
-            </div>
-        `;
-
-        const inputFields = document.getElementById('inputFields');
-        const toolForm = document.getElementById('toolForm');
-
-        if (toolName === 'Pinyin Converter') {
-            inputFields.innerHTML = `
-                <label for="text">输入汉字:</label>
-                <textarea id="text" name="text" required></textarea>
+        modalBody.innerHTML = '';
+        
+        if (toolName === 'Irr Calculator') {
+            modalBody.innerHTML = `
+                <h2>信用卡账单分期真实利率计算器</h2>
+                <div class="tool-container irr-calculator">
+                    <form id="toolForm" class="tool-form">
+                        <div class="input-group">
+                            <label for="principal">分期本金</label>
+                            <input type="number" id="principal" name="principal" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="payment">每期还款本息</label>
+                            <input type="number" id="payment" name="payment" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="periods">还款期数</label>
+                            <input type="number" id="periods" name="periods" step="1" required>
+                        </div>
+                        <button type="submit" class="submit-btn">计算</button>
+                    </form>
+                    <div id="toolResult" class="tool-result">
+                        <div class="result-item">
+                            <span>年化真实利率</span>
+                            <span id="annualRate"></span>
+                        </div>
+                        <div class="result-item">
+                            <span>月化真实利率</span>
+                            <span id="monthlyRate"></span>
+                        </div>
+                    </div>
+                </div>
             `;
-        } else if (toolName === 'Irr Calculator') {
-            inputFields.innerHTML = `
-                <label for="principal">本金:</label>
-                <input type="number" id="principal" name="principal" step="0.01" required>
-                <label for="payment">每期还款额:</label>
-                <input type="number" id="payment" name="payment" step="0.01" required>
-                <label for="periods">还款期数:</label>
-                <input type="number" id="periods" name="periods" step="1" required>
+        } else if (toolName === 'Pinyin Converter') {
+            modalBody.innerHTML = `
+                <h2>姓名转拼音</h2>
+                <div class="tool-container pinyin-converter">
+                    <form id="toolForm" class="tool-form">
+                        <div class="input-group">
+                            <label for="text">输入姓名(以空格分开)</label>
+                            <textarea id="text" name="text" required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">转换</button>
+                    </form>
+                    <div id="toolResult" class="tool-result"></div>
+                </div>
             `;
         }
+
+        const toolForm = document.getElementById('toolForm');
 
         toolForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -92,13 +113,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.error) {
                     toolResult.innerHTML = `<p class="error">${data.error}</p>`;
                 } else {
-                    let result = '';
                     if (toolName === 'Pinyin Converter') {
-                        result = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
+                        toolResult.innerHTML = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
                     } else if (toolName === 'Irr Calculator') {
-                        result = `<p>年化IRR: ${data.result.annual_irr}</p><p>月化IRR: ${data.result.monthly_irr}</p>`;
+                        document.getElementById('annualRate').textContent = data.result.annual_irr;
+                        document.getElementById('monthlyRate').textContent = data.result.monthly_irr;
                     }
-                    toolResult.innerHTML = result;
                 }
                 toolResult.style.display = 'block';
             })
