@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         let iframe = document.createElement('iframe');
-        iframe.src = `http://dify.141010.xyz/chatbot/${token}`;
+        iframe.src = `https://dify.141010.xyz/chatbot/${token}`;
         iframe.style.width = '100%';
         iframe.style.height = '700px';
         iframe.style.border = 'none';
