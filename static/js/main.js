@@ -130,16 +130,27 @@ document.addEventListener('DOMContentLoaded', function() {
         let iframe = document.createElement('iframe');
         iframe.src = `https://dify.141010.xyz/chatbot/${token}`;
         iframe.style.width = '100%';
-        iframe.style.height = '700px';
+        iframe.style.height = '100%';
         iframe.style.border = 'none';
         iframe.allow = 'microphone';
         
+        let headerDiv = document.createElement('div');
+        headerDiv.className = 'modal-header';
+        
         let titleElement = document.createElement('h2');
         titleElement.textContent = title;
-        titleElement.style.textAlign = 'center';
-        titleElement.style.marginBottom = '20px';
         
-        modalBody.appendChild(titleElement);
+        let clearButton = document.createElement('button');
+        clearButton.textContent = '清除历史记录';
+        clearButton.className = 'clear-history';
+        clearButton.onclick = function() {
+            iframe.src = iframe.src;
+        };
+        
+        headerDiv.appendChild(titleElement);
+        headerDiv.appendChild(clearButton);
+        
+        modalBody.appendChild(headerDiv);
         modalBody.appendChild(iframe);
     }
 });
