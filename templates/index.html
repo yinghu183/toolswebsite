@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多功能工具箱</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>多功能工具箱</h1>
         </header>
-        <div id="content">
-            <div class="column">
+        <main id="content">
+            <section class="column">
                 <h2>工具</h2>
                 <div id="tools">
                     {% for tool in tools %}
@@ -21,8 +22,8 @@
                     </div>
                     {% endfor %}
                 </div>
-            </div>
-            <div class="column">
+            </section>
+            <section class="column">
                 <h2>AI 工具</h2>
                 <div id="ai-tools">
                     <div class="card" data-ai-tool="a">
@@ -35,8 +36,8 @@
                         <h3>多语言翻译</h3>
                     </div>
                 </div>
-            </div>
-            <div class="column">
+            </section>
+            <section class="column">
                 <h2>外部链接</h2>
                 <div id="external-links">
                     <a href="https://alist.577277.xyz" target="_blank" class="card">
@@ -46,8 +47,8 @@
                         <h3>诗词</h3>
                     </a>
                 </div>
-            </div>
-        </div>
+            </section>
+        </main>
     </div>
     <div id="modal" class="modal">
         <div class="modal-content">
