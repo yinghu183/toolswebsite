@@ -1,17 +1,42 @@
 document.addEventListener('DOMContentLoaded', function() {
     const toolsContainer = document.getElementById('tools');
-    const resultDiv = document.getElementById('result');
+    const aiToolsContainer = document.getElementById('ai-tools');
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modal-body');
+    const closeBtn = document.getElementsByClassName('close')[0];
 
     toolsContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.card');
         if (card) {
             const toolName = card.dataset.tool;
             loadToolInterface(toolName);
+            modal.style.display = 'block';
         }
     });
 
+    aiToolsContainer.addEventListener('click', function(e) {
+        const card = e.target.closest('.card');
+        if (card) {
+            const aiTool = card.dataset.aiTool;
+            loadAITool(aiTool);
+            modal.style.display = 'block';
+        }
+    });
+
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+        modalBody.innerHTML = '';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            modalBody.innerHTML = '';
+        }
+    }
+
     function loadToolInterface(toolName) {
-        resultDiv.innerHTML = `
+        modalBody.innerHTML = `
             <h3>${toolName}</h3>
             <form id="toolForm">
                 <div id="inputFields"></div>
@@ -80,5 +105,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('toolResult').innerHTML = '<p style="color: red;">操作出错，请重试</p>';
             });
         });
+    }
+
+    function loadAITool(aiTool) {
+        let script = document.createElement('script');
+        script.type = 'text/javascript';
+        
+        switch(aiTool) {
+            case 'a':
+                script.innerHTML = `
+                    window.difyChatbotConfig = {
+                        token: 'XGNUclyu0yzj5eMm',
+                        baseUrl: 'http://dify.141010.xyz'
+                    }
+                `;
+                break;
+            case 'b':
+                script.innerHTML = `
+                    window.difyChatbotConfig = {
+                        token: 'Jwla83F8CmWY0S3M',
+                        baseUrl: 'http://dify.141010.xyz'
+                    }
+                `;
+                break;
+            case 'c':
+                script.innerHTML = `
+                    window.difyChatbotConfig = {
+                        token: 'YTsXdjIJmlspSSA1',
+                        baseUrl: 'http://dify.141010.xyz'
+                    }
+                `;
+                break;
+        }
+        
+        modalBody.appendChild(script);
+
+        let embedScript = document.createElement('script');
+        embedScript.src = 'http://dify.141010.xyz/embed.min.js';
+        embedScript.id = window.difyChatbotConfig.token;
+        embedScript.defer = true;
+        
+        modalBody.appendChild(embedScript);
     }
 });
