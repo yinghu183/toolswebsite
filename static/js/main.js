@@ -108,43 +108,45 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadAITool(aiTool) {
-        let script = document.createElement('script');
-        script.type = 'text/javascript';
+        modalBody.innerHTML = ''; // 清空模态框内容
+
+        let config = document.createElement('script');
+        config.type = 'text/javascript';
         
+        let token;
         switch(aiTool) {
             case 'a':
-                script.innerHTML = `
-                    window.difyChatbotConfig = {
-                        token: 'XGNUclyu0yzj5eMm',
-                        baseUrl: 'http://dify.141010.xyz'
-                    }
-                `;
+                token = 'XGNUclyu0yzj5eMm';
                 break;
             case 'b':
-                script.innerHTML = `
-                    window.difyChatbotConfig = {
-                        token: 'Jwla83F8CmWY0S3M',
-                        baseUrl: 'http://dify.141010.xyz'
-                    }
-                `;
+                token = 'Jwla83F8CmWY0S3M';
                 break;
             case 'c':
-                script.innerHTML = `
-                    window.difyChatbotConfig = {
-                        token: 'YTsXdjIJmlspSSA1',
-                        baseUrl: 'http://dify.141010.xyz'
-                    }
-                `;
+                token = 'YTsXdjIJmlspSSA1';
                 break;
         }
         
-        modalBody.appendChild(script);
+        config.innerHTML = `
+            window.difyChatbotConfig = {
+                token: '${token}',
+                baseUrl: 'http://dify.141010.xyz'
+            }
+        `;
+        
+        modalBody.appendChild(config);
 
         let embedScript = document.createElement('script');
         embedScript.src = 'http://dify.141010.xyz/embed.min.js';
-        embedScript.id = window.difyChatbotConfig.token;
+        embedScript.id = token;
         embedScript.defer = true;
         
         modalBody.appendChild(embedScript);
+
+        // 给脚本一些时间来加载和初始化
+        setTimeout(() => {
+            if (!modalBody.querySelector('#dify-chatbot-wrapper')) {
+                modalBody.innerHTML += '<p>AI 工具加载失败，请稍后再试。</p>';
+            }
+        }, 3000);
     }
 });

@@ -57,6 +57,7 @@ h1 {
     align-items: center;
     justify-content: center;
     min-height: 100px;
+    aspect-ratio: 1 / 1;
 }
 
 .card:hover {
@@ -64,7 +65,7 @@ h1 {
     box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
-.card h2 {
+.card h2, .card h3 {
     color: #2c3e50;
     margin: 0;
 }
@@ -128,12 +129,14 @@ footer {
 
 #content {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
+    gap: 20px;
 }
 
 .column {
-    flex: 1;
-    margin: 0 10px;
+    flex: 1 1 300px;
+    min-width: 0;
 }
 
 .modal {
@@ -150,12 +153,14 @@ footer {
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 5% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 80%;
+    width: 90%;
     max-width: 600px;
     border-radius: 8px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .close {
@@ -177,4 +182,19 @@ footer {
 #external-links .card {
     text-decoration: none;
     color: inherit;
+}
+
+@media (max-width: 768px) {
+    #content {
+        flex-direction: column;
+    }
+
+    .column {
+        flex-basis: 100%;
+    }
+
+    .card {
+        aspect-ratio: auto;
+        min-height: 80px;
+    }
 }
