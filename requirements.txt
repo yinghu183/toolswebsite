@@ -3,3 +3,4 @@ gunicorn
 pypinyin
 numpy
 scipy
+Pillow

@@ -83,6 +83,85 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="toolResult" class="tool-result"></div>
                 </div>
             `;
+        } else if (toolName === 'Image Watermark') {
+            modalBody.innerHTML = `
+                <h2>图片水印</h2>
+                <div class="tool-container image-watermark">
+                    <form id="toolForm" class="tool-form">
+                        <div class="input-group">
+                            <label for="image">选择图片</label>
+                            <input type="file" id="image" name="image" accept="image/*" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="mark">水印文字</label>
+                            <input type="text" id="mark" name="mark" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="color">水印颜色</label>
+                            <input type="color" id="color" name="color" value="#000000">
+                        </div>
+                        <div class="input-group">
+                            <label for="size">字体大小</label>
+                            <input type="number" id="size" name="size" value="50" min="1" max="500">
+                        </div>
+                        <div class="input-group">
+                            <label for="opacity">透明度</label>
+                            <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
+                        </div>
+                        <div class="input-group">
+                            <label for="angle">旋转角度</label>
+                            <input type="number" id="angle" name="angle" value="30" min="0" max="360">
+                        </div>
+                        <button type="submit" class="submit-btn">添加水印</button>
+                    </form>
+                    <div id="preview" class="preview">
+                        <img id="previewImage" src="" alt="预览图片">
+                    </div>
+                    <div id="toolResult" class="tool-result"></div>
+                </div>
+            `;
+
+            const imageInput = document.getElementById('image');
+            const previewImage = document.getElementById('previewImage');
+
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const toolForm = document.getElementById('toolForm');
+            toolForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(toolForm);
+
+                fetch('/add_watermark', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const toolResult = document.getElementById('toolResult');
+                    if (data.error) {
+                        toolResult.innerHTML = `<p class="error">${data.error}</p>`;
+                    } else {
+                        toolResult.innerHTML = `
+                            <p>水印添加成功！</p>
+                            <a href="/download/${data.result}" class="download-btn">下载处理后的图片</a>
+                        `;
+                    }
+                    toolResult.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('toolResult').innerHTML = '<p class="error">操作出错，请重试</p>';
+                });
+            });
         }
 
         const toolForm = document.getElementById('toolForm');
