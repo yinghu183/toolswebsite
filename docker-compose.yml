@@ -14,6 +14,9 @@ services:
     build: .
     volumes:
       - .:/app
+      - ./uploads:/app/uploads
+      - ./font:/app/font
+      - ./static:/app/static
     environment:
       - FLASK_ENV=production
     ports:

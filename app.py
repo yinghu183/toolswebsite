@@ -67,6 +67,8 @@ def calculate_irr():
 @app.route('/add_watermark', methods=['POST'])
 def watermark():
     try:
+        logging.debug(f"接收到的表单数据: {request.form}")
+        logging.debug(f"接收到的文件: {request.files}")
         if 'image' not in request.files:
             return jsonify({'error': '没有上传图片'}), 400
         
@@ -76,6 +78,7 @@ def watermark():
         size = int(request.form.get('size', 50))
         opacity = float(request.form.get('opacity', 0.5))
         angle = int(request.form.get('angle', 30))
+        space = int(request.form.get('space', 75))
         
         if not image.filename:
             return jsonify({'error': '没有选择图片'}), 400
@@ -83,7 +86,9 @@ def watermark():
         image_path = os.path.join('uploads', image.filename)
         image.save(image_path)
         
-        output_path = add_watermark(image_path, mark, color, size, opacity, angle)
+        font_family = "./font/青鸟华光简琥珀.ttf"  # 确保这个字体文件存在
+        
+        output_path = add_watermark(image_path, mark, color, font_family, size, opacity, angle, space)
         
         return jsonify({'result': output_path})
     
