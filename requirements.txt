@@ -4,4 +4,3 @@ pypinyin
 numpy
 scipy
 Pillow
-py-zerox
