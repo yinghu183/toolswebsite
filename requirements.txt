@@ -6,3 +6,4 @@ scipy
 Pillow
 py-zerox
 litellm
+flask-cors

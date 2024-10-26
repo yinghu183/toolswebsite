@@ -33,11 +33,16 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP error ' + response.status);
+                }
+                return response.text();
+            })
             .then(data => {
                 var resultDiv = document.getElementById('result');
                 var errorDiv = document.getElementById('error');
-                if (data.startsWith('错误：')) {
+                if (data.trim().startsWith('错误：')) {
                     errorDiv.textContent = data;
                     errorDiv.style.display = 'block';
                     resultDiv.style.display = 'none';
@@ -49,8 +54,9 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('error').textContent = '处理文件时出错';
+                document.getElementById('error').textContent = '处理文件时出错: ' + error.message;
                 document.getElementById('error').style.display = 'block';
+                document.getElementById('result').style.display = 'none';
             });
         });
     </script>

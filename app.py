@@ -11,8 +11,10 @@ from werkzeug.utils import secure_filename
 import asyncio
 import traceback
 from pyzerox.core.types import ZeroxOutput
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # 设置日志
 logging.basicConfig(level=logging.DEBUG)
@@ -119,10 +121,14 @@ def download_file(filename):
 def zerox_ocr():
     if request.method == 'POST':
         if 'file' not in request.files:
+            app.logger.error("No file part in the request")
             return "错误：没有上传文件", 400
         
         file = request.files['file']
+        app.logger.info(f"Received file: {file.filename}")
+        
         if file.filename == '':
+            app.logger.error("No selected file")
             return "错误：没有选择文件", 400
         
         if file and allowed_file(file.filename):
@@ -130,35 +136,34 @@ def zerox_ocr():
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join('uploads', unique_filename)
             file.save(file_path)
+            app.logger.info(f"Processing file: {file_path}")
             
             try:
                 result = process_file_sync(file_path)
-                os.remove(file_path)  # 处理完成后删除文件
+                app.logger.info(f"OCR result: {result}")
                 
-                if isinstance(result, ZeroxOutput):
-                    markdown_content = f"# OCR 结果\n\n"
-                    markdown_content += f"文件名: {result.file_name}\n"
-                    markdown_content += f"处理时间: {result.completion_time:.2f} 秒\n"
-                    markdown_content += f"输入 tokens: {result.input_tokens}\n"
-                    markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
-                    
-                    for page in result.pages:
-                        markdown_content += f"## 第 {page.page} 页\n\n"
-                        markdown_content += page.content + "\n\n"
-                    
-                    return markdown_content, 200, {'Content-Type': 'text/markdown'}
-                else:
-                    return "错误：意外的结果格式", 500
-            except ValueError as ve:
-                return f"错误：{str(ve)}", 400
+                # 构建 Markdown 内容
+                markdown_content = f"# OCR 结果\n\n"
+                markdown_content += f"文件名: {result.file_name}\n"
+                markdown_content += f"处理时间: {result.completion_time:.2f} 秒\n"
+                markdown_content += f"输入 tokens: {result.input_tokens}\n"
+                markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
+                
+                for page in result.pages:
+                    markdown_content += f"## 第 {page.page} 页\n\n"
+                    markdown_content += page.content + "\n\n"
+                
+                return markdown_content, 200, {'Content-Type': 'text/markdown; charset=utf-8'}
+            
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
                 app.logger.error(traceback.format_exc())
-                return f"处理文件时出错: {str(e)}", 500
+                return f"错误：处理文件时出错 - {str(e)}", 400
             finally:
                 if os.path.exists(file_path):
                     os.remove(file_path)
         else:
+            app.logger.error(f"Invalid file type: {file.filename}")
             return "错误：不支持的文件类型", 400
     
     return render_template('zerox_ocr.html')
