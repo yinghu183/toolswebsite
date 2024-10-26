@@ -22,6 +22,13 @@ TOOLS = [
     {"name": "Zerox OCR", "display_name": "文档OCR"}
 ]
 
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+app.config['MAX_CONTENT_LENGTH'] = 52428800  # 50MB
+
 @app.route('/')
 def home():
     return render_template('index.html', tools=TOOLS)
@@ -115,7 +122,8 @@ def zerox_ocr():
         if file.filename == '':
             return jsonify({'error': '没有选择文件'}), 400
         
-        if file:
+        if file and allowed_file(file.filename):
+            # 处理文件
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join('uploads', unique_filename)
@@ -130,6 +138,8 @@ def zerox_ocr():
             except Exception as e:
                 os.remove(file_path)  # 发生错误时也删除文件
                 return jsonify({'error': str(e)}), 500
+        else:
+            return jsonify({'error': '不支持的文件类型'}), 400
     
     return render_template('zerox_ocr.html')
 

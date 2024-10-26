@@ -19,6 +19,7 @@ services:
       - ./static:/app/static
     environment:
       - FLASK_ENV=production
+      - MAX_CONTENT_LENGTH=52428800  # 50MB in bytes
     ports:
       - "8000:8000"
 networks:
