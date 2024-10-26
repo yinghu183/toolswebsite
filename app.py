@@ -9,6 +9,7 @@ import uuid
 import shutil
 from werkzeug.utils import secure_filename
 import asyncio
+import traceback
 
 app = Flask(__name__)
 
@@ -132,10 +133,14 @@ def zerox_ocr():
             try:
                 result = process_file_sync(file_path)
                 os.remove(file_path)  # 处理完成后删除文件
+                if result is None:
+                    raise ValueError("OCR处理返回空结果")
                 return jsonify(result)
             except Exception as e:
+                app.logger.error(f"Error in zerox_ocr: {str(e)}")
+                app.logger.error(traceback.format_exc())
                 os.remove(file_path)  # 发生错误时也删除文件
-                return jsonify({'error': str(e)}), 500
+                return jsonify({'error': f'处理文件时出错: {str(e)}'}), 500
         else:
             return jsonify({'error': '不支持的文件类型'}), 400
     

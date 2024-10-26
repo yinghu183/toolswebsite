@@ -2,6 +2,7 @@ from pyzerox import zerox
 import os
 import asyncio
 import logging
+import traceback
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ async def process_file(file_path):
         os.environ["OPENAI_API_BASE"] = "https://burn.hair/v1"
 
         # 设置模型和其他参数
-        model = "gpt-4o-mini"  # 或者您选择的其他模型
+        model = "gpt-4-vision-preview"  # 或者您选择的其他模型
         output_dir = "./output"
         custom_system_prompt = None  # 可以根据需要设置
         select_pages = None  # 可以根据需要设置
@@ -40,13 +41,24 @@ async def process_file(file_path):
             **kwargs
         )
 
+        logger.debug(f"Zerox result type: {type(result)}")
         logger.debug(f"Zerox result: {result}")
+
+        if result is None:
+            raise ValueError("Zerox returned None result")
+
         return result
 
     except Exception as e:
-        logger.error(f"Error processing file: {str(e)}", exc_info=True)
+        logger.error(f"Error processing file: {str(e)}")
+        logger.error(traceback.format_exc())
         raise
 
 # 如果需要在非异步环境中调用
 def process_file_sync(file_path):
-    return asyncio.run(process_file(file_path))
+    try:
+        return asyncio.run(process_file(file_path))
+    except Exception as e:
+        logger.error(f"Error in process_file_sync: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
