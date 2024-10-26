@@ -9,8 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = e.target.closest('.card');
         if (card) {
             const toolName = card.dataset.tool;
-            loadToolInterface(toolName);
-            modal.style.display = 'block';
+            if (toolName === 'Zerox OCR') {
+                window.open('/zerox_ocr', '_blank');
+            } else {
+                loadToolInterface(toolName);
+                modal.style.display = 'block';
+            }
         }
     });
 

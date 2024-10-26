@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 from tools.pinyin_converter import process_names
 from tools.irr_calculator import calculate_real_irr
 from tools.watermark import add_watermark
+from tools.zerox_ocr import process_file
 import os
 import logging
+import uuid
+import shutil
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -14,7 +18,8 @@ logging.basicConfig(level=logging.DEBUG)
 TOOLS = [
     {"name": "Pinyin Converter", "display_name": "拼音转换器"},
     {"name": "Irr Calculator", "display_name": "IRR 计算器"},
-    {"name": "Image Watermark", "display_name": "图片水印"}
+    {"name": "Image Watermark", "display_name": "图片水印"},
+    {"name": "Zerox OCR", "display_name": "文档OCR"}
 ]
 
 @app.route('/')
@@ -99,6 +104,45 @@ def watermark():
 @app.route('/download/<path:filename>')
 def download_file(filename):
     return send_file(filename, as_attachment=True)
+
+@app.route('/zerox_ocr', methods=['GET', 'POST'])
+def zerox_ocr():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return jsonify({'error': '没有上传文件'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        if file:
+            filename = secure_filename(file.filename)
+            unique_filename = f"{uuid.uuid4()}_{filename}"
+            file_path = os.path.join('uploads', unique_filename)
+            file.save(file_path)
+            
+            try:
+                result = process_file(file_path)
+                os.remove(file_path)  # 处理完成后删除文件
+                return jsonify(result)
+            except Exception as e:
+                os.remove(file_path)  # 发生错误时也删除文件
+                return jsonify({'error': str(e)}), 500
+    
+    return render_template('zerox_ocr.html')
+
+# 定期清理上传文件的函数（可以通过定时任务调用）
+def cleanup_uploads():
+    uploads_dir = 'uploads'
+    for filename in os.listdir(uploads_dir):
+        file_path = os.path.join(uploads_dir, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(f'Failed to delete {file_path}. Reason: {e}')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

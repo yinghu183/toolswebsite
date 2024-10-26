@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zerox OCR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Zerox OCR</h1>
+        </header>
+        <main>
+            <div class="tool-container">
+                <form id="ocrForm" class="tool-form">
+                    <div class="input-group">
+                        <label for="file">选择文件</label>
+                        <input type="file" id="file" name="file" required>
+                    </div>
+                    <button type="submit" class="submit-btn">处理文件</button>
+                </form>
+                <div id="result" class="tool-result" style="display: none;"></div>
+            </div>
+        </main>
+    </div>
+    <script>
+        document.getElementById('ocrForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            fetch('/zerox_ocr', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                var resultDiv = document.getElementById('result');
+                if (data.error) {
+                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3>处理结果：</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <a href="#" class="download-btn" onclick="downloadResult(${JSON.stringify(data)})">下载结果</a>
+                    `;
+                }
+                resultDiv.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = '<p class="error">处理文件时出错</p>';
+            });
+        });
+
+        function downloadResult(data) {
+            var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'ocr_result.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
