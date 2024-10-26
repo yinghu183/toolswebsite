@@ -124,6 +124,8 @@ def zerox_ocr():
             try:
                 result = process_file(file_path)
                 os.remove(file_path)  # 处理完成后删除文件
+                if result is None:
+                    return jsonify({'error': 'OCR 处理失败'}), 500
                 return jsonify(result)
             except Exception as e:
                 os.remove(file_path)  # 发生错误时也删除文件

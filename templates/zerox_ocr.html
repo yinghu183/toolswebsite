@@ -20,6 +20,7 @@
                     </div>
                     <button type="submit" class="submit-btn">处理文件</button>
                 </form>
+                <div id="error" class="error" style="display: none; color: red;"></div>
                 <div id="result" class="tool-result" style="display: none;"></div>
             </div>
         </main>
@@ -35,20 +36,25 @@
             .then(response => response.json())
             .then(data => {
                 var resultDiv = document.getElementById('result');
+                var errorDiv = document.getElementById('error');
                 if (data.error) {
-                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                    resultDiv.style.display = 'none';
                 } else {
+                    errorDiv.style.display = 'none';
                     resultDiv.innerHTML = `
                         <h3>处理结果：</h3>
                         <pre>${JSON.stringify(data, null, 2)}</pre>
                         <a href="#" class="download-btn" onclick="downloadResult(${JSON.stringify(data)})">下载结果</a>
                     `;
+                    resultDiv.style.display = 'block';
                 }
-                resultDiv.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('result').innerHTML = '<p class="error">处理文件时出错</p>';
+                document.getElementById('error').textContent = '处理文件时出错';
+                document.getElementById('error').style.display = 'block';
             });
         });
 
