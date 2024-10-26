@@ -20,11 +20,11 @@ async def process_file(file_path):
             raise ValueError("File size exceeds limit")
 
         # 设置环境变量
-        os.environ["OPENAI_API_KEY"] = "sk-2jIu4cwmA58sWUeM170bC42a2bAd433dA84296Be9fC025E3"
-        os.environ["OPENAI_API_BASE"] = "https://burn.hair/v1"
+        os.environ["OPENAI_API_KEY"] = "sk-FccRgIDYhi5ObIfF40D63dD5A8Ad4e20A549F63973681e69"
+        os.environ["OPENAI_API_BASE"] = "https://api.141010.xyz/v1"
 
         # 设置模型和其他参数
-        model = "gpt-4-vision-preview"  # 或者您选择的其他模型
+        model = "gpt-4o-mini"  # 或者您选择的其他模型
         output_dir = "./output"
         custom_system_prompt = None  # 可以根据需要设置
         select_pages = None  # 可以根据需要设置
