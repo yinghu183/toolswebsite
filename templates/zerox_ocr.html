@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zerox OCR</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,6 +30,12 @@
         document.getElementById('ocrForm').addEventListener('submit', function(e) {
             e.preventDefault();
             var formData = new FormData(this);
+            var errorDiv = document.getElementById('error');
+            var resultDiv = document.getElementById('result');
+
+            errorDiv.style.display = 'none';
+            resultDiv.style.display = 'none';
+
             fetch('/zerox_ocr', {
                 method: 'POST',
                 body: formData
@@ -40,26 +47,25 @@
                 return response.text();
             })
             .then(data => {
-                var resultDiv = document.getElementById('result');
-                var errorDiv = document.getElementById('error');
-                if (data.trim().startsWith('错误：')) {
+                if (data.startsWith('错误：')) {
                     errorDiv.textContent = data;
                     errorDiv.style.display = 'block';
-                    resultDiv.style.display = 'none';
                 } else {
-                    errorDiv.style.display = 'none';
-                    resultDiv.innerHTML = marked(data);  // 使用 marked.js 渲染 Markdown
+                    if (typeof marked === 'function') {
+                        resultDiv.innerHTML = marked(data);
+                    } else {
+                        resultDiv.textContent = data;
+                        console.warn('Marked.js is not loaded. Displaying raw Markdown.');
+                    }
                     resultDiv.style.display = 'block';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('error').textContent = '处理文件时出错: ' + error.message;
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('result').style.display = 'none';
+                errorDiv.textContent = '处理文件时出错: ' + error.message;
+                errorDiv.style.display = 'block';
             });
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>
