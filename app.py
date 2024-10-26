@@ -2,12 +2,13 @@ from flask import Flask, render_template, request, jsonify, send_file, redirect,
 from tools.pinyin_converter import process_names
 from tools.irr_calculator import calculate_real_irr
 from tools.watermark import add_watermark
-from tools.zerox_ocr import process_file
+from tools.zerox_ocr import process_file_sync
 import os
 import logging
 import uuid
 import shutil
 from werkzeug.utils import secure_filename
+import asyncio
 
 app = Flask(__name__)
 
@@ -123,17 +124,14 @@ def zerox_ocr():
             return jsonify({'error': '没有选择文件'}), 400
         
         if file and allowed_file(file.filename):
-            # 处理文件
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join('uploads', unique_filename)
             file.save(file_path)
             
             try:
-                result = process_file(file_path)
+                result = process_file_sync(file_path)
                 os.remove(file_path)  # 处理完成后删除文件
-                if result is None:
-                    return jsonify({'error': 'OCR 处理失败'}), 500
                 return jsonify(result)
             except Exception as e:
                 os.remove(file_path)  # 发生错误时也删除文件
