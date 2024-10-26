@@ -1,6 +1,7 @@
-import logging
+from pyzerox import zerox
 import os
 import asyncio
+import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -16,8 +17,8 @@ def process_file(file_path):
             raise ValueError("File size exceeds limit")
 
         # 设置环境变量
-        os.environ["OPENAI_API_KEY"] = "sk-FccRgIDYhi5ObIfF40D63dD5A8Ad4e20A549F63973681e69"
-        os.environ["OPENAI_API_BASE"] = "https://api.141010.xyz/v1"
+        os.environ["OPENAI_API_KEY"] = "sk-2jIu4cwmA58sWUeM170bC42a2bAd433dA84296Be9fC025E3"
+        os.environ["OPENAI_API_BASE"] = "https://burn.hair/v1"
 
         async def run_zerox():
             try:
