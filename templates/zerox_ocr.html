@@ -15,8 +15,8 @@
             <div class="tool-container">
                 <form id="ocrForm" class="tool-form">
                     <div class="input-group">
-                        <label for="file">选择文件（支持PDF、PNG、JPG，最大50MB）</label>
-                        <input type="file" id="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required>
+                        <label for="file">选择文件（支持多种格式，最大50MB）</label>
+                        <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.odt,.ott,.rtf,.txt,.html,.htm,.xml,.wps,.wpd,.xls,.xlsx,.ods,.ots,.csv,.tsv,.ppt,.pptx,.odp,.otp" required>
                     </div>
                     <button type="submit" class="submit-btn">处理文件</button>
                 </form>
@@ -33,21 +33,18 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => response.text())
             .then(data => {
                 var resultDiv = document.getElementById('result');
                 var errorDiv = document.getElementById('error');
-                if (data.error) {
-                    errorDiv.textContent = data.error;
+                if (data.startsWith('{"error":')) {
+                    var errorObj = JSON.parse(data);
+                    errorDiv.textContent = errorObj.error;
                     errorDiv.style.display = 'block';
                     resultDiv.style.display = 'none';
                 } else {
                     errorDiv.style.display = 'none';
-                    resultDiv.innerHTML = `
-                        <h3>处理结果：</h3>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                        <a href="#" class="download-btn" onclick="downloadResult(${JSON.stringify(data)})">下载结果</a>
-                    `;
+                    resultDiv.innerHTML = marked(data);  // 使用 marked.js 渲染 Markdown
                     resultDiv.style.display = 'block';
                 }
             })
@@ -57,18 +54,7 @@
                 document.getElementById('error').style.display = 'block';
             });
         });
-
-        function downloadResult(data) {
-            var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'ocr_result.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>

@@ -4,3 +4,5 @@ pypinyin
 numpy
 scipy
 Pillow
+py-zerox
+litellm

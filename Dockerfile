@@ -5,6 +5,8 @@ WORKDIR /app
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     poppler-utils \
+    libreoffice \
+    graphicsmagick \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

@@ -41,12 +41,7 @@ async def process_file(file_path):
             **kwargs
         )
 
-        logger.debug(f"Zerox result type: {type(result)}")
-        logger.debug(f"Zerox result: {result}")
-
-        if result is None:
-            raise ValueError("Zerox returned None result")
-
+        # 直接返回 ZeroxOutput 对象
         return result
 
     except Exception as e:
