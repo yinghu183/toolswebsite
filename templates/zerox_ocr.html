@@ -37,9 +37,8 @@
             .then(data => {
                 var resultDiv = document.getElementById('result');
                 var errorDiv = document.getElementById('error');
-                if (data.startsWith('{"error":')) {
-                    var errorObj = JSON.parse(data);
-                    errorDiv.textContent = errorObj.error;
+                if (data.startsWith('错误：')) {
+                    errorDiv.textContent = data;
                     errorDiv.style.display = 'block';
                     resultDiv.style.display = 'none';
                 } else {

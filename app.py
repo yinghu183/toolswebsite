@@ -10,6 +10,7 @@ import shutil
 from werkzeug.utils import secure_filename
 import asyncio
 import traceback
+from pyzerox.core.types import ZeroxOutput
 
 app = Flask(__name__)
 
@@ -24,7 +25,7 @@ TOOLS = [
     {"name": "Zerox OCR", "display_name": "文档OCR"}
 ]
 
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'odt', 'ott', 'rtf', 'txt', 'html', 'htm', 'xml', 'wps', 'wpd', 'xls', 'xlsx', 'ods', 'ots', 'csv', 'tsv', 'ppt', 'pptx', 'odp', 'otp'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -118,11 +119,11 @@ def download_file(filename):
 def zerox_ocr():
     if request.method == 'POST':
         if 'file' not in request.files:
-            return jsonify({'error': '没有上传文件'}), 400
+            return "错误：没有上传文件", 400
         
         file = request.files['file']
         if file.filename == '':
-            return jsonify({'error': '没有选择文件'}), 400
+            return "错误：没有选择文件", 400
         
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
@@ -133,16 +134,32 @@ def zerox_ocr():
             try:
                 result = process_file_sync(file_path)
                 os.remove(file_path)  # 处理完成后删除文件
-                if result is None:
-                    raise ValueError("OCR处理返回空结果")
-                return jsonify(result)
+                
+                if isinstance(result, ZeroxOutput):
+                    markdown_content = f"# OCR 结果\n\n"
+                    markdown_content += f"文件名: {result.file_name}\n"
+                    markdown_content += f"处理时间: {result.completion_time:.2f} 秒\n"
+                    markdown_content += f"输入 tokens: {result.input_tokens}\n"
+                    markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
+                    
+                    for page in result.pages:
+                        markdown_content += f"## 第 {page.page} 页\n\n"
+                        markdown_content += page.content + "\n\n"
+                    
+                    return markdown_content, 200, {'Content-Type': 'text/markdown'}
+                else:
+                    return "错误：意外的结果格式", 500
+            except ValueError as ve:
+                return f"错误：{str(ve)}", 400
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
                 app.logger.error(traceback.format_exc())
-                os.remove(file_path)  # 发生错误时也删除文件
-                return jsonify({'error': f'处理文件时出错: {str(e)}'}), 500
+                return f"处理文件时出错: {str(e)}", 500
+            finally:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
         else:
-            return jsonify({'error': '不支持的文件类型'}), 400
+            return "错误：不支持的文件类型", 400
     
     return render_template('zerox_ocr.html')
 
