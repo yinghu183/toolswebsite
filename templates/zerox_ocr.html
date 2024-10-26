@@ -40,23 +40,16 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('HTTP error ' + response.status);
-                }
-                return response.text();
-            })
+            .then(response => response.json())
             .then(data => {
-                if (data.startsWith('错误：')) {
-                    errorDiv.textContent = data;
+                if (data.error) {
+                    errorDiv.textContent = data.error;
                     errorDiv.style.display = 'block';
                 } else {
-                    if (typeof marked === 'function') {
-                        resultDiv.innerHTML = marked(data);
-                    } else {
-                        resultDiv.textContent = data;
-                        console.warn('Marked.js is not loaded. Displaying raw Markdown.');
-                    }
+                    resultDiv.innerHTML = `
+                        <p>${data.message}</p>
+                        <a href="${data.download_link}" class="download-btn">下载 Markdown 文件</a>
+                    `;
                     resultDiv.style.display = 'block';
                 }
             })

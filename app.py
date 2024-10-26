@@ -115,7 +115,7 @@ def watermark():
 
 @app.route('/download/<path:filename>')
 def download_file(filename):
-    return send_file(filename, as_attachment=True)
+    return send_file(os.path.join('uploads', filename), as_attachment=True)
 
 @app.route('/zerox_ocr', methods=['GET', 'POST'])
 def zerox_ocr():
@@ -153,7 +153,18 @@ def zerox_ocr():
                     markdown_content += f"## 第 {page.page} 页\n\n"
                     markdown_content += page.content + "\n\n"
                 
-                return markdown_content, 200, {'Content-Type': 'text/markdown; charset=utf-8'}
+                # 保存 Markdown 文件
+                markdown_filename = f"{os.path.splitext(unique_filename)[0]}.md"
+                markdown_path = os.path.join('uploads', markdown_filename)
+                with open(markdown_path, 'w', encoding='utf-8') as f:
+                    f.write(markdown_content)
+                
+                # 返回下载链接
+                download_link = url_for('download_file', filename=markdown_filename)
+                return jsonify({
+                    'message': 'OCR 处理完成',
+                    'download_link': download_link
+                }), 200
             
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
