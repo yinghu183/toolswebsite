@@ -90,44 +90,72 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (toolName === 'Image Watermark') {
             modalBody.innerHTML = `
                 <h2 class="watermark-title">图片水印</h2>
-                <div class="tool-container image-watermark">
-                    <div class="watermark-layout">
-                        <div class="watermark-preview">
+                <div class="watermark-container">
+                    <div class="watermark-preview-section">
+                        <div class="preview-wrapper">
                             <canvas id="previewCanvas"></canvas>
                         </div>
-                        <div class="watermark-form">
-                            <form id="toolForm" class="tool-form">
-                                <div class="input-group">
-                                    <label for="image"><i class="fas fa-image"></i> 选择图片</label>
-                                    <input type="file" id="image" name="image" accept="image/*" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="mark"><i class="fas fa-font"></i> 水印文字</label>
-                                    <input type="text" id="mark" name="mark" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="color"><i class="fas fa-palette"></i> 水印颜色</label>
-                                    <input type="color" id="color" name="color" value="#000000">
-                                </div>
-                                <div class="input-group">
-                                    <label for="size"><i class="fas fa-text-height"></i> 字体大小: <span id="sizeValue">50</span></label>
-                                    <input type="range" id="size" name="size" min="10" max="100" value="50">
-                                </div>
-                                <div class="input-group">
-                                    <label for="opacity"><i class="fas fa-low-vision"></i> 透明度: <span id="opacityValue">0.5</span></label>
-                                    <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
-                                </div>
-                                <div class="input-group">
-                                    <label for="angle"><i class="fas fa-redo"></i> 旋转角度: <span id="angleValue">30</span>°</label>
-                                    <input type="range" id="angle" name="angle" min="0" max="360" value="30">
-                                </div>
-                                <button type="submit" class="submit-btn"><i class="fas fa-magic"></i> 添加水印</button>
-                            </form>
-                        </div>
                     </div>
-                    <div id="toolResult" class="tool-result"></div>
+                    <div class="watermark-form-section">
+                        <form id="toolForm" class="tool-form">
+                            <div class="input-group">
+                                <label for="image">
+                                    <i class="fas fa-image"></i> 选择图片
+                                </label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="image" name="image" accept="image/*" required>
+                                    <span class="file-name">未选择文件</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="mark">
+                                    <i class="fas fa-font"></i> 水印文字
+                                </label>
+                                <input type="text" id="mark" name="mark" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="color">
+                                    <i class="fas fa-palette"></i> 水印颜色
+                                </label>
+                                <input type="color" id="color" name="color" value="#000000">
+                            </div>
+                            <div class="input-group">
+                                <label for="size">
+                                    <i class="fas fa-text-height"></i> 字体大小: <span id="sizeValue">50</span>
+                                </label>
+                                <input type="range" id="size" name="size" min="10" max="100" value="50">
+                            </div>
+                            <div class="input-group">
+                                <label for="opacity">
+                                    <i class="fas fa-low-vision"></i> 透明度: <span id="opacityValue">0.5</span>
+                                </label>
+                                <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
+                            </div>
+                            <div class="input-group">
+                                <label for="angle">
+                                    <i class="fas fa-redo"></i> 旋转角度: <span id="angleValue">30</span>°
+                                </label>
+                                <input type="range" id="angle" name="angle" min="0" max="360" value="30">
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <i class="fas fa-magic"></i> 添加水印
+                            </button>
+                        </form>
+                    </div>
                 </div>
+                <div id="toolResult" class="tool-result"></div>
             `;
+
+            // 添加文件名显示功能
+            const fileInput = document.getElementById('image');
+            const fileNameSpan = document.querySelector('.file-name');
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    fileNameSpan.textContent = this.files[0].name;
+                } else {
+                    fileNameSpan.textContent = '未选择文件';
+                }
+            });
 
             const imageInput = document.getElementById('image');
             const previewCanvas = document.getElementById('previewCanvas');
