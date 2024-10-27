@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileNameSpan = document.querySelector('.file-name');
     const previewImage = document.getElementById('previewImage');
     const toolForm = document.getElementById('toolForm');
+    const resultArea = document.getElementById('resultArea');
+    const resultMessage = document.getElementById('resultMessage');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     fileInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
@@ -37,22 +40,25 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            const toolResult = document.getElementById('toolResult');
             if (data.error) {
-                toolResult.innerHTML = `<p class="error">${data.error}</p>`;
+                resultMessage.textContent = data.error;
+                downloadBtn.style.display = 'none';
             } else {
-                toolResult.innerHTML = `
-                    <p>水印添加成功！</p>
-                    <a href="/download/${data.result}" class="download-btn">下载处理后的图片</a>
-                `;
+                resultMessage.textContent = '水印添加成功！';
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.onclick = function() {
+                    window.location.href = `/download/${data.result}`;
+                };
                 // 更新预览图为处理后的图片
                 previewImage.src = `/download/${data.result}`;
             }
-            toolResult.style.display = 'block';
+            resultArea.style.display = 'block';
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('toolResult').innerHTML = '<p class="error">操作出错，请重试</p>';
+            resultMessage.textContent = '操作出错，请重试';
+            downloadBtn.style.display = 'none';
+            resultArea.style.display = 'block';
         });
     });
 });

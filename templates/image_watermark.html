@@ -14,7 +14,6 @@
             <h1>图片水印工具</h1>
         </header>
         <main id="content">
-            <h2 class="watermark-title">图片水印</h2>
             <div class="watermark-container">
                 <div class="watermark-preview-section">
                     <div class="preview-wrapper">
@@ -65,10 +64,15 @@
                         <button type="submit" class="submit-btn">
                             <i class="fas fa-magic"></i> 添加水印
                         </button>
+                        <div id="resultArea" class="result-area" style="display: none;">
+                            <p id="resultMessage"></p>
+                            <button id="downloadBtn" class="download-btn">
+                                <i class="fas fa-download"></i> 下载处理后的图片
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
-            <div id="toolResult" class="tool-result"></div>
         </main>
     </div>
     <script src="{{ url_for('static', filename='js/image_watermark.js') }}"></script>
