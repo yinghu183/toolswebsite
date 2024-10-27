@@ -505,3 +505,37 @@ h1 {
     color: white;
     border-radius: 5px;
 }
+
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-input-wrapper input[type="file"] {
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-input-wrapper .file-input-button {
+    display: inline-block;
+    padding: 8px 12px;
+    background-color: #ffffff;
+    color: #3498db;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.file-input-wrapper .file-input-button:hover {
+    background-color: #f0f0f0;
+}
+
+.file-input-wrapper .file-name {
+    margin-left: 10px;
+}
