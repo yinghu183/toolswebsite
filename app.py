@@ -100,14 +100,21 @@ def watermark():
         if not image.filename:
             return jsonify({'error': '没有选择图片'}), 400
         
-        image_path = os.path.join('uploads', image.filename)
+        # 生成唯一的临时文件名
+        temp_filename = f"temp_{uuid.uuid4()}_{secure_filename(image.filename)}"
+        image_path = os.path.join('uploads', temp_filename)
         image.save(image_path)
         
-        font_family = "./font/青鸟华光简琥珀.ttf"  # 确保这个字体文件存在
-        
-        output_path = add_watermark(image_path, mark, color, font_family, size, opacity, angle, space)
-        
-        return jsonify({'result': output_path})
+        try:
+            font_family = "./font/青鸟华光简琥珀.ttf"
+            watermarked_filename = add_watermark(image_path, mark, color, font_family, size, opacity, angle, space)
+            
+            # 返回处理后的文件名，用于下载
+            return jsonify({'result': watermarked_filename})
+        finally:
+            # 删除原始临时文件
+            if os.path.exists(image_path):
+                os.remove(image_path)
     
     except Exception as e:
         logging.error(f"添加水印时出错: {str(e)}")
@@ -115,7 +122,24 @@ def watermark():
 
 @app.route('/download/<path:filename>')
 def download_file(filename):
-    return send_file(os.path.join('uploads', filename), as_attachment=True)
+    try:
+        file_path = os.path.join('uploads', filename)
+        response = send_file(file_path, as_attachment=True)
+        
+        # 在发送文件后安排删除任务
+        @response.call_on_close
+        def delete_file():
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    logging.debug(f"已删除文件: {file_path}")
+            except Exception as e:
+                logging.error(f"删除文件时出错: {str(e)}")
+        
+        return response
+    except Exception as e:
+        logging.error(f"下载文件时出错: {str(e)}")
+        return "文件下载失败", 404
 
 @app.route('/zerox_ocr', methods=['GET', 'POST'])
 def zerox_ocr():

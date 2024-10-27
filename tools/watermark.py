@@ -66,12 +66,12 @@ def add_watermark(image_path, mark_text, color, font_family, font_size, opacity,
     im.paste(mark2, (int((im.size[0] - c) / 2), int((im.size[1] - c) / 2)), mask=mark2.split()[3])
     del mark2
 
-    output_path = os.path.join('static', 'watermarked', os.path.basename(image_path))
-    if not os.path.exists(os.path.dirname(output_path)):
-        os.makedirs(os.path.dirname(output_path))
+    # 在uploads目录中保存水印处理后的文件
+    output_filename = f"watermarked_{os.path.basename(image_path)}"
+    output_path = os.path.join('uploads', output_filename)
 
     if os.path.splitext(output_path)[1].lower() != '.png':
         im = im.convert('RGB')
     im.save(output_path, quality=80)
 
-    return output_path
+    return output_filename  # 只返回文件名
