@@ -318,11 +318,14 @@ h1 {
 
 .watermark-layout {
     display: flex;
-    gap: 20px;
+    gap: 40px;
+    align-items: flex-start;
 }
 
-.watermark-form {
-    flex: 1;
+.watermark-title {
+    text-align: center;
+    color: var(--secondary-color);
+    margin-bottom: 20px;
 }
 
 .watermark-preview {
@@ -330,28 +333,62 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.watermark-form {
+    flex: 1;
 }
 
 #previewCanvas {
     max-width: 100%;
     max-height: 400px;
     border: 1px solid #ddd;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--secondary-color);
 }
 
 .input-group input[type="range"] {
     width: 100%;
 }
 
-.input-group span {
-    display: inline-block;
-    margin-left: 10px;
+.input-group input[type="text"],
+.input-group input[type="color"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    background-color: var(--secondary-color);
+}
+
+@media (max-width: 768px) {
+    .watermark-layout {
+        flex-direction: column;
+    }
 }

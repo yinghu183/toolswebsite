@@ -89,43 +89,40 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         } else if (toolName === 'Image Watermark') {
             modalBody.innerHTML = `
-                <h2>图片水印</h2>
+                <h2 class="watermark-title">图片水印</h2>
                 <div class="tool-container image-watermark">
                     <div class="watermark-layout">
+                        <div class="watermark-preview">
+                            <canvas id="previewCanvas"></canvas>
+                        </div>
                         <div class="watermark-form">
                             <form id="toolForm" class="tool-form">
                                 <div class="input-group">
-                                    <label for="image">选择图片</label>
+                                    <label for="image"><i class="fas fa-image"></i> 选择图片</label>
                                     <input type="file" id="image" name="image" accept="image/*" required>
                                 </div>
                                 <div class="input-group">
-                                    <label for="mark">水印文字</label>
+                                    <label for="mark"><i class="fas fa-font"></i> 水印文字</label>
                                     <input type="text" id="mark" name="mark" required>
                                 </div>
                                 <div class="input-group">
-                                    <label for="color">水印颜色</label>
+                                    <label for="color"><i class="fas fa-palette"></i> 水印颜色</label>
                                     <input type="color" id="color" name="color" value="#000000">
                                 </div>
                                 <div class="input-group">
-                                    <label for="size">字体大小</label>
+                                    <label for="size"><i class="fas fa-text-height"></i> 字体大小: <span id="sizeValue">50</span></label>
                                     <input type="range" id="size" name="size" min="10" max="100" value="50">
-                                    <span id="sizeValue">50</span>
                                 </div>
                                 <div class="input-group">
-                                    <label for="opacity">透明度</label>
+                                    <label for="opacity"><i class="fas fa-low-vision"></i> 透明度: <span id="opacityValue">0.5</span></label>
                                     <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
-                                    <span id="opacityValue">0.5</span>
                                 </div>
                                 <div class="input-group">
-                                    <label for="angle">旋转角度</label>
+                                    <label for="angle"><i class="fas fa-redo"></i> 旋转角度: <span id="angleValue">30</span>°</label>
                                     <input type="range" id="angle" name="angle" min="0" max="360" value="30">
-                                    <span id="angleValue">30</span>
                                 </div>
-                                <button type="submit" class="submit-btn">添加水印</button>
+                                <button type="submit" class="submit-btn"><i class="fas fa-magic"></i> 添加水印</button>
                             </form>
-                        </div>
-                        <div class="watermark-preview">
-                            <canvas id="previewCanvas"></canvas>
                         </div>
                     </div>
                     <div id="toolResult" class="tool-result"></div>
@@ -159,7 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const angle = document.getElementById('angle').value;
 
                 // 设置画布大小
-                const scale = Math.min(400 / originalImage.width, 400 / originalImage.height);
+                const maxWidth = 400;
+                const maxHeight = 400;
+                let scale = Math.min(maxWidth / originalImage.width, maxHeight / originalImage.height);
                 previewCanvas.width = originalImage.width * scale;
                 previewCanvas.height = originalImage.height * scale;
 
@@ -170,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.save();
                 ctx.globalAlpha = opacity;
                 ctx.fillStyle = color;
-                ctx.font = `${size * scale}px Arial`;
+                ctx.font = `${size * scale / 2}px Arial`;
                 ctx.translate(previewCanvas.width / 2, previewCanvas.height / 2);
                 ctx.rotate(angle * Math.PI / 180);
                 ctx.fillText(mark, 0, 0);
