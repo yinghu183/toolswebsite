@@ -216,5 +216,9 @@ def cleanup_uploads():
         except Exception as e:
             print(f'Failed to delete {file_path}. Reason: {e}')
 
+@app.route('/image_watermark')
+def image_watermark():
+    return render_template('image_watermark.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
