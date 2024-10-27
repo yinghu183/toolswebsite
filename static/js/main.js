@@ -91,52 +91,101 @@ document.addEventListener('DOMContentLoaded', function() {
             modalBody.innerHTML = `
                 <h2>图片水印</h2>
                 <div class="tool-container image-watermark">
-                    <form id="toolForm" class="tool-form">
-                        <div class="input-group">
-                            <label for="image">选择图片</label>
-                            <input type="file" id="image" name="image" accept="image/*" required>
+                    <div class="watermark-layout">
+                        <div class="watermark-form">
+                            <form id="toolForm" class="tool-form">
+                                <div class="input-group">
+                                    <label for="image">选择图片</label>
+                                    <input type="file" id="image" name="image" accept="image/*" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="mark">水印文字</label>
+                                    <input type="text" id="mark" name="mark" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="color">水印颜色</label>
+                                    <input type="color" id="color" name="color" value="#000000">
+                                </div>
+                                <div class="input-group">
+                                    <label for="size">字体大小</label>
+                                    <input type="range" id="size" name="size" min="10" max="100" value="50">
+                                    <span id="sizeValue">50</span>
+                                </div>
+                                <div class="input-group">
+                                    <label for="opacity">透明度</label>
+                                    <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
+                                    <span id="opacityValue">0.5</span>
+                                </div>
+                                <div class="input-group">
+                                    <label for="angle">旋转角度</label>
+                                    <input type="range" id="angle" name="angle" min="0" max="360" value="30">
+                                    <span id="angleValue">30</span>
+                                </div>
+                                <button type="submit" class="submit-btn">添加水印</button>
+                            </form>
                         </div>
-                        <div class="input-group">
-                            <label for="mark">水印文字</label>
-                            <input type="text" id="mark" name="mark" required>
+                        <div class="watermark-preview">
+                            <canvas id="previewCanvas"></canvas>
                         </div>
-                        <div class="input-group">
-                            <label for="color">水印颜色</label>
-                            <input type="color" id="color" name="color" value="#000000">
-                        </div>
-                        <div class="input-group">
-                            <label for="size">字体大小</label>
-                            <input type="number" id="size" name="size" value="50" min="1" max="500">
-                        </div>
-                        <div class="input-group">
-                            <label for="opacity">透明度</label>
-                            <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
-                        </div>
-                        <div class="input-group">
-                            <label for="angle">旋转角度</label>
-                            <input type="number" id="angle" name="angle" value="30" min="0" max="360">
-                        </div>
-                        <button type="submit" class="submit-btn">添加水印</button>
-                    </form>
-                    <div id="preview" class="preview">
-                        <img id="previewImage" src="" alt="预览图片">
                     </div>
                     <div id="toolResult" class="tool-result"></div>
                 </div>
             `;
 
             const imageInput = document.getElementById('image');
-            const previewImage = document.getElementById('previewImage');
+            const previewCanvas = document.getElementById('previewCanvas');
+            const ctx = previewCanvas.getContext('2d');
+            let originalImage = new Image();
 
             imageInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        previewImage.src = e.target.result;
+                        originalImage.src = e.target.result;
+                        originalImage.onload = function() {
+                            updatePreview();
+                        }
                     }
                     reader.readAsDataURL(file);
                 }
+            });
+
+            function updatePreview() {
+                const mark = document.getElementById('mark').value;
+                const color = document.getElementById('color').value;
+                const size = document.getElementById('size').value;
+                const opacity = document.getElementById('opacity').value;
+                const angle = document.getElementById('angle').value;
+
+                // 设置画布大小
+                const scale = Math.min(400 / originalImage.width, 400 / originalImage.height);
+                previewCanvas.width = originalImage.width * scale;
+                previewCanvas.height = originalImage.height * scale;
+
+                // 绘制原始图片
+                ctx.drawImage(originalImage, 0, 0, previewCanvas.width, previewCanvas.height);
+
+                // 添加水印
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.fillStyle = color;
+                ctx.font = `${size * scale}px Arial`;
+                ctx.translate(previewCanvas.width / 2, previewCanvas.height / 2);
+                ctx.rotate(angle * Math.PI / 180);
+                ctx.fillText(mark, 0, 0);
+                ctx.restore();
+            }
+
+            // 为所有输入添加事件监听器
+            ['mark', 'color', 'size', 'opacity', 'angle'].forEach(id => {
+                const element = document.getElementById(id);
+                element.addEventListener('input', function() {
+                    if (id === 'size' || id === 'opacity' || id === 'angle') {
+                        document.getElementById(`${id}Value`).textContent = this.value;
+                    }
+                    updatePreview();
+                });
             });
 
             const toolForm = document.getElementById('toolForm');
