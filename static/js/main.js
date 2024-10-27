@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="watermark-container">
                     <div class="watermark-preview-section">
                         <div class="preview-wrapper">
-                            <canvas id="previewCanvas"></canvas>
+                            <img id="previewImage" alt="预览图" />
                         </div>
                     </div>
                     <div class="watermark-form-section">
@@ -146,72 +146,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="toolResult" class="tool-result"></div>
             `;
 
-            // 添加文件名显示功能
             const fileInput = document.getElementById('image');
             const fileNameSpan = document.querySelector('.file-name');
+            const previewImage = document.getElementById('previewImage');
+
             fileInput.addEventListener('change', function(e) {
                 if (this.files && this.files[0]) {
-                    fileNameSpan.textContent = this.files[0].name;
-                } else {
-                    fileNameSpan.textContent = '未选择文件';
-                }
-            });
-
-            const imageInput = document.getElementById('image');
-            const previewCanvas = document.getElementById('previewCanvas');
-            const ctx = previewCanvas.getContext('2d');
-            let originalImage = new Image();
-
-            imageInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
+                    const file = this.files[0];
+                    fileNameSpan.textContent = file.name;
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        originalImage.src = e.target.result;
-                        originalImage.onload = function() {
-                            updatePreview();
-                        }
+                        previewImage.src = e.target.result;
                     }
                     reader.readAsDataURL(file);
+                } else {
+                    fileNameSpan.textContent = '未选择文件';
+                    previewImage.src = '';
                 }
             });
 
-            function updatePreview() {
-                const mark = document.getElementById('mark').value;
-                const color = document.getElementById('color').value;
-                const size = document.getElementById('size').value;
-                const opacity = document.getElementById('opacity').value;
-                const angle = document.getElementById('angle').value;
-
-                // 设置画布大小
-                const maxWidth = 400;
-                const maxHeight = 400;
-                let scale = Math.min(maxWidth / originalImage.width, maxHeight / originalImage.height);
-                previewCanvas.width = originalImage.width * scale;
-                previewCanvas.height = originalImage.height * scale;
-
-                // 绘制原始图片
-                ctx.drawImage(originalImage, 0, 0, previewCanvas.width, previewCanvas.height);
-
-                // 添加水印
-                ctx.save();
-                ctx.globalAlpha = opacity;
-                ctx.fillStyle = color;
-                ctx.font = `${size * scale / 2}px Arial`;
-                ctx.translate(previewCanvas.width / 2, previewCanvas.height / 2);
-                ctx.rotate(angle * Math.PI / 180);
-                ctx.fillText(mark, 0, 0);
-                ctx.restore();
-            }
-
-            // 为所有输入添加事件监听器
-            ['mark', 'color', 'size', 'opacity', 'angle'].forEach(id => {
+            ['size', 'opacity', 'angle'].forEach(id => {
                 const element = document.getElementById(id);
+                const valueSpan = document.getElementById(`${id}Value`);
                 element.addEventListener('input', function() {
-                    if (id === 'size' || id === 'opacity' || id === 'angle') {
-                        document.getElementById(`${id}Value`).textContent = this.value;
-                    }
-                    updatePreview();
+                    valueSpan.textContent = this.value;
                 });
             });
 
@@ -234,6 +192,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p>水印添加成功！</p>
                             <a href="/download/${data.result}" class="download-btn">下载处理后的图片</a>
                         `;
+                        // 更新预览图为处理后的图片
+                        previewImage.src = `/download/${data.result}`;
                     }
                     toolResult.style.display = 'block';
                 })
