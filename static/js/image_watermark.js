@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
             const file = this.files[0];
-            fileNameSpan.textContent = file.name;
+            const fileName = file.name;
+            fileNameSpan.textContent = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
             const reader = new FileReader();
             reader.onload = function(e) {
                 previewImage.src = e.target.result;
