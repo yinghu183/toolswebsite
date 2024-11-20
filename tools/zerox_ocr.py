@@ -20,7 +20,7 @@ async def process_file(file_path):
             raise ValueError("File size exceeds limit")
 
         # 设置环境变量
-        os.environ["OPENAI_API_KEY"] = "sk-3MujoWIJ42aLe83H0b61748b0a43438d83D57c7073Ef5b63"
+        os.environ["OPENAI_API_KEY"] = "sk-WUacwbfypNyq4IYv2b12421755C54207B2F70487872782Ae"
         os.environ["OPENAI_API_BASE"] = "https://api.141010.xyz/v1"
 
         # 设置模型和其他参数
