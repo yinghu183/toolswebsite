@@ -146,61 +146,58 @@ def zerox_ocr():
     if request.method == 'POST':
         if 'file' not in request.files:
             app.logger.error("No file part in the request")
-            return "错误：没有上传文件", 400
-        
+            return jsonify({'error': '没有上传文件'}), 400
+
         file = request.files['file']
+        api_key = request.form.get('apiKey')
+        api_base = request.form.get('apiBase')
+        model = request.form.get('model')
+
+        if not api_key or not model:
+            return jsonify({'error': 'API Key 和模型为必填项'}), 400
+        if not api_base:
+            api_base = "https://api.openai.com/v1"  # 可设为默认
+
         app.logger.info(f"Received file: {file.filename}")
-        
+
         if file.filename == '':
             app.logger.error("No selected file")
-            return "错误：没有选择文件", 400
-        
+            return jsonify({'error': '没有选择文件'}), 400
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join('uploads', unique_filename)
             file.save(file_path)
             app.logger.info(f"Processing file: {file_path}")
-            
+
             try:
-                result = process_file_sync(file_path)
+                result = process_file_sync(file_path, api_key, api_base, model)
                 app.logger.info(f"OCR result: {result}")
-                
-                # 构建 Markdown 内容
+
                 markdown_content = f"# OCR 结果\n\n"
                 markdown_content += f"文件名: {result.file_name}\n"
                 markdown_content += f"处理时间: {result.completion_time:.2f} 秒\n"
                 markdown_content += f"输入 tokens: {result.input_tokens}\n"
                 markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
-                
+
                 for page in result.pages:
                     markdown_content += f"## 第 {page.page} 页\n\n"
                     markdown_content += page.content + "\n\n"
-                
-                # 保存 Markdown 文件
-                markdown_filename = f"{os.path.splitext(unique_filename)[0]}.md"
-                markdown_path = os.path.join('uploads', markdown_filename)
-                with open(markdown_path, 'w', encoding='utf-8') as f:
-                    f.write(markdown_content)
-                
-                # 返回下载链接
-                download_link = url_for('download_file', filename=markdown_filename)
-                return jsonify({
-                    'message': 'OCR 处理完成',
-                    'download_link': download_link
-                }), 200
-            
+
+                return jsonify({'markdown': markdown_content}), 200
+
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
                 app.logger.error(traceback.format_exc())
-                return f"错误：处理文件时出错 - {str(e)}", 400
+                return jsonify({'error': f"处理文件时出错 - {str(e)}"}), 400
             finally:
                 if os.path.exists(file_path):
                     os.remove(file_path)
         else:
             app.logger.error(f"Invalid file type: {file.filename}")
-            return "错误：不支持的文件类型", 400
-    
+            return jsonify({'error': '不支持的文件类型'}), 400
+
     return render_template('zerox_ocr.html')
 
 # 定期清理上传文件的函数（可以通过定时任务调用）

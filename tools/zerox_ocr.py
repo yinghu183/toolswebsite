@@ -7,7 +7,7 @@ import traceback
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-async def process_file(file_path):
+async def process_file(file_path, api_key, api_base, model):
     try:
         logger.debug(f"Starting to process file: {file_path}")
 
@@ -20,11 +20,10 @@ async def process_file(file_path):
             raise ValueError("File size exceeds limit")
 
         # 设置环境变量
-        os.environ["OPENAI_API_KEY"] = "sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        os.environ["OPENAI_API_BASE"] = "https://XXXXXXXXXXXXXXXXXX/v1"
+        os.environ["OPENAI_API_KEY"] = api_key
+        os.environ["OPENAI_API_BASE"] = api_base
 
         # 设置模型和其他参数
-        model = "gpt-4o-mini"  # 或者您选择的其他模型
         output_dir = "./output"
         custom_system_prompt = None  # 可以根据需要设置
         select_pages = None  # 可以根据需要设置
@@ -50,9 +49,9 @@ async def process_file(file_path):
         raise
 
 # 如果需要在非异步环境中调用
-def process_file_sync(file_path):
+def process_file_sync(file_path, api_key, api_base, model):
     try:
-        return asyncio.run(process_file(file_path))
+        return asyncio.run(process_file(file_path, api_key, api_base, model))
     except Exception as e:
         logger.error(f"Error in process_file_sync: {str(e)}")
         logger.error(traceback.format_exc())

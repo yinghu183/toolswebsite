@@ -163,12 +163,16 @@
 </head>
 <body>
     <div class="container">
-        <a href="{{ url_for('index') }}" style="text-decoration: none; color: #007bff;">&larr; 返回首页</a>
+        <a href="{{ url_for('home') }}" style="text-decoration: none; color: #007bff;">&larr; 返回首页</a>
         <h1>文档 OCR (Powered by Zerox)</h1>
         <form id="ocrForm" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="apiKey">API Key (例如 OpenAI, Azure, Gemini等)</label>
                 <input type="text" id="apiKey" name="apiKey" required placeholder="请输入您的 API Key">
+            </div>
+            <div class="form-group">
+                <label for="apiBase">API Base (可选)</label>
+                <input type="text" id="apiBase" name="apiBase" placeholder="如 https://api.openai.com/v1">
             </div>
             <div class="form-group">
                 <label for="model">选择模型</label>
@@ -177,7 +181,7 @@
                     <option value="gpt-4o-mini">OpenAI - gpt-4o-mini</option>
                     <option value="gemini/gemini-1.5-pro-latest">Google - Gemini 1.5 Pro</option>
                     <option value="gemini/gemini-1.5-flash-latest">Google - Gemini 1.5 Flash</option>
-                    </select>
+                </select>
             </div>
             <div class="form-group">
                 <label for="document">选择文件 (PDF, DOCX, JPG, PNG等)</label>
