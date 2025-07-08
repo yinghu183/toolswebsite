@@ -20,11 +20,11 @@ async def process_file(file_path):
             raise ValueError("File size exceeds limit")
 
         # 设置环境变量
-        os.environ["OPENAI_API_KEY"] = "sk-WUacwbfypNyq4IYv2b12421755C54207B2F70487872782Ae"
+        os.environ["OPENAI_API_KEY"] = "sk-EHtyDHYVfBIx0a0rQGBw4pKTJTyQL1tTaYKeRuQCGcOSP8kq"
         os.environ["OPENAI_API_BASE"] = "https://api.141010.xyz/v1"
 
         # 设置模型和其他参数
-        model = "gpt-4o-mini"  # 或者您选择的其他模型
+        model = "gemini-2.5-flash"  # 或者您选择的其他模型
         output_dir = "./output"
         custom_system_prompt = None  # 可以根据需要设置
         select_pages = None  # 可以根据需要设置
