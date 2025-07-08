@@ -174,10 +174,15 @@ def zerox_ocr():
             try:
                 result = process_file_sync(file_path, api_key, api_base, model)
                 app.logger.info(f"OCR result: {result}")
+                app.logger.info(f"completion_time raw: {result.completion_time} (type: {type(result.completion_time)})")
+
+                completion_time = result.completion_time
+                if completion_time > 1000:
+                    completion_time = completion_time / 1000
 
                 markdown_content = f"# OCR 结果\n\n"
                 markdown_content += f"文件名: {result.file_name}\n"
-                markdown_content += f"处理时间: {result.completion_time:.2f} 秒\n"
+                markdown_content += f"处理时间: {completion_time:.2f} 秒\n"
                 markdown_content += f"输入 tokens: {result.input_tokens}\n"
                 markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
 
