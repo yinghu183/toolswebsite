@@ -24,7 +24,7 @@ async def process_file(file_path):
         os.environ["OPENAI_API_BASE"] = "https://api.141010.xyz/v1"
 
         # 设置模型和其他参数
-        model = "gemini-2.5-flash"  # 或者您选择的其他模型
+        model = "gpt-4o-mini"  # 或者您选择的其他模型
         output_dir = "./output"
         custom_system_prompt = None  # 可以根据需要设置
         select_pages = None  # 可以根据需要设置
