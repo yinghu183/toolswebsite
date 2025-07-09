@@ -1,4 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, make_response
+# --- START MODIFICATION ---
+from werkzeug.middleware.proxy_fix import ProxyFix
+# --- END MODIFICATION ---
 from tools.pinyin_converter import process_names
 from tools.irr_calculator import calculate_real_irr
 from tools.watermark import add_watermark
@@ -15,6 +18,13 @@ from flask_cors import CORS
 import threading
 
 app = Flask(__name__)
+
+# --- START MODIFICATION ---
+# 添加 ProxyFix 中间件，使其能够识别反向代理传入的 X-Forwarded-Proto 等头信息
+# 这将确保 url_for 在生成外部链接时使用 https (如果原始请求是https)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+# --- END MODIFICATION ---
+
 
 # 配置CORS
 CORS(app, resources={
@@ -204,18 +214,18 @@ def zerox_ocr():
             file.save(file_path)
 
             try:
-                # 生成唯一的输出文件名
+                # 1. 生成唯一的输出文件名
                 output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(filename)[0]}.md"
-                # 生成完整的输出路径
+                # 2. 生成后台要使用的完整输出路径
                 output_file_path = os.path.join('output', output_filename)
                 
-                # 生成给前端的下载URL
+                # 3. 生成给前端的下载URL
                 download_url = url_for('download_markdown', filename=output_filename, _external=True)
                 
                 # 在后台处理OCR
                 def process_ocr():
                     try:
-                        # 把完整的输出路径传递给处理函数
+                        # 4. 把完整的输出路径传递给后台函数
                         result = process_file_sync(file_path, api_key, api_base, model, output_file_path)
                         app.logger.info(f"OCR result received successfully")
                     except Exception as e:
