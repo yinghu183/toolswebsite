@@ -74,7 +74,7 @@ def process_file_sync(file_path, api_key, api_base, model):
             os.chmod(output_dir, 0o777)
 
         # 处理文件
-        result = process_file(file_path, api_key, api_base, model)
+        result = asyncio.run(process_file(file_path, api_key, api_base, model))
         
         # 生成唯一的输出文件名
         output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(os.path.basename(file_path))[0]}.md"
