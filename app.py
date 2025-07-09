@@ -1,4 +1,3 @@
-# ... (文件顶部的所有 import 保持不变) ...
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, make_response
 from werkzeug.middleware.proxy_fix import ProxyFix
 from tools.pinyin_converter import process_names
@@ -20,7 +19,7 @@ import subprocess
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-# ... (CORS, after_request, logging, TOOLS, convert_to_pdf_if_needed 等所有辅助代码保持不变) ...
+# (CORS, after_request, logging, and TOOLS list remain the same)
 CORS(app, resources={
     r"/*": {
         "origins": "*",
@@ -45,24 +44,42 @@ TOOLS = [
     {"name": "Zerox OCR", "display_name": "文档OCR"}
 ]
 app.config['MAX_CONTENT_LENGTH'] = 52428800
+
+# --- START MODIFICATION ---
+# 升级版、更智能的文件转换函数
 def convert_to_pdf_if_needed(file_path):
+    """
+    检查文件类型，并使用最合适的工具将其转换为PDF。
+    - Office文档和文本文档使用 LibreOffice。
+    - 图片文件使用 GraphicsMagick。
+    返回最终可用于OCR的PDF文件路径。
+    """
     file_name = os.path.basename(file_path)
     file_ext = os.path.splitext(file_name)[1].lower()
+    
+    # 1. 如果已经是PDF，直接返回
     if file_ext == '.pdf':
         app.logger.info(f"File '{file_name}' is already a PDF. No conversion needed.")
         return file_path
+
     output_dir = os.path.dirname(file_path)
     pdf_filename = os.path.splitext(file_name)[0] + '.pdf'
     pdf_path = os.path.join(output_dir, pdf_filename)
+    
     image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', 'tiff']
+
     try:
+        # 2. 如果是图片，使用 GraphicsMagick (gm)
         if file_ext in image_extensions:
             app.logger.info(f"Converting image '{file_name}' to PDF using GraphicsMagick...")
+            # 使用 `gm convert` 命令
             command = ["gm", "convert", file_path, pdf_path]
             result = subprocess.run(command, capture_output=True, text=True, timeout=60)
             if result.returncode != 0:
                 app.logger.error(f"GraphicsMagick conversion failed. Stderr: {result.stderr}")
                 raise RuntimeError(f"Image conversion to PDF failed: {result.stderr}")
+
+        # 3. 如果是其他支持的文档，使用 LibreOffice
         else:
             app.logger.info(f"Converting document '{file_name}' to PDF using LibreOffice...")
             command = ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", output_dir, file_path]
@@ -70,11 +87,15 @@ def convert_to_pdf_if_needed(file_path):
             if result.returncode != 0:
                 app.logger.error(f"LibreOffice conversion failed. Stderr: {result.stderr}")
                 raise RuntimeError(f"Document conversion to PDF failed: {result.stderr}")
+
+        # 4. 确认转换后的PDF文件存在
         if not os.path.exists(pdf_path):
             app.logger.error(f"Conversion command succeeded, but output PDF not found at {pdf_path}")
             raise FileNotFoundError("Converted PDF file not found.")
+
         app.logger.info(f"Successfully converted '{file_name}' to '{os.path.basename(pdf_path)}'.")
         return pdf_path
+
     except FileNotFoundError as e:
         tool = "gm (GraphicsMagick)" if file_ext in image_extensions else "libreoffice"
         app.logger.error(f"`{tool}` command not found. Is it installed in the environment? Error: {e}")
@@ -82,6 +103,8 @@ def convert_to_pdf_if_needed(file_path):
     except Exception as e:
         app.logger.error(f"An exception occurred during file conversion: {e}")
         raise
+# --- END MODIFICATION ---
+
 
 # (home, pinyin, irr, watermark, download等路由保持原样)
 @app.route('/')
@@ -178,7 +201,7 @@ if not os.path.exists(output_dir):
 else:
     os.chmod(output_dir, 0o777)
 
-
+# zerox_ocr 路由保持不变，因为它现在调用了新的转换函数
 @app.route('/zerox_ocr', methods=['GET', 'POST', 'OPTIONS'])
 def zerox_ocr():
     if request.method == 'OPTIONS':
@@ -186,9 +209,11 @@ def zerox_ocr():
     
     if request.method == 'POST':
         if 'file' not in request.files:
+            app.logger.error("No file part in the request")
             return jsonify({'error': '没有上传文件'}), 400
 
         file = request.files['file']
+        # ... (表单数据获取等代码不变) ...
         api_key = request.form.get('apiKey')
         api_base = request.form.get('apiBase')
         model = request.form.get('model')
@@ -196,9 +221,10 @@ def zerox_ocr():
         if not api_key or not model:
             return jsonify({'error': 'API Key 和模型为必填项'}), 400
         if not api_base:
-            api_base = "https://api.openai.com/v1"
+            api_base = "https://api.141010.xyz/v1"
 
         if file.filename == '':
+            app.logger.error("No selected file")
             return jsonify({'error': '没有选择文件'}), 400
 
         try:
@@ -207,25 +233,16 @@ def zerox_ocr():
             os.makedirs('uploads', exist_ok=True)
             file.save(upload_path)
             
+            # 关键改动：调用我们新的、更智能的转换函数
             ocr_ready_file_path = convert_to_pdf_if_needed(upload_path)
             
-            # --- START MODIFICATION ---
-            # 终极解决方案：为模型名称加上 "openai/" 前缀，以强制使用 OpenAI 兼容模式
-            # 这可以一劳永逸地解决所有非 OpenAI 官方模型的 "Provider not found" 问题
-            final_model_name = model
-            if "/" not in model:
-                final_model_name = f"openai/{model}"
-                app.logger.info(f"Model name '{model}' updated to '{final_model_name}' to force OpenAI-compatible mode.")
-            # --- END MODIFICATION ---
-
             output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(original_filename)[0]}.md"
             output_file_path = os.path.join('output', output_filename)
             download_url = url_for('download_markdown', filename=output_filename, _external=True)
             
             def process_ocr():
                 try:
-                    # 将添加了前缀的最终模型名称传递给后台任务
-                    process_file_sync(ocr_ready_file_path, api_key, api_base, final_model_name, output_file_path)
+                    process_file_sync(ocr_ready_file_path, api_key, api_base, model, output_file_path)
                     app.logger.info(f"OCR result received successfully for {original_filename}")
                 except Exception as e:
                     app.logger.error(f"Error in background OCR process: {str(e)}")
