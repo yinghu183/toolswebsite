@@ -161,9 +161,12 @@ def download_file(filename):
         logging.error(f"下载文件时出错: {str(e)}")
         return "文件下载失败", 404
 
-# 确保输出目录存在
-if not os.path.exists('output'):
-    os.makedirs('output')
+# 确保输出目录存在并设置正确的权限
+output_dir = os.path.join(os.getcwd(), 'output')
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir, mode=0o777)
+else:
+    os.chmod(output_dir, 0o777)
 
 @app.route('/zerox_ocr', methods=['GET', 'POST', 'OPTIONS'])
 def zerox_ocr():
@@ -194,11 +197,19 @@ def zerox_ocr():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
-            file_path = os.path.join('uploads', unique_filename)
             
-            # 确保上传目录存在
-            os.makedirs('uploads', exist_ok=True)
+            # 确保上传目录存在并设置权限
+            uploads_dir = os.path.join(os.getcwd(), 'uploads')
+            if not os.path.exists(uploads_dir):
+                os.makedirs(uploads_dir, mode=0o777)
+            else:
+                os.chmod(uploads_dir, 0o777)
+                
+            file_path = os.path.join(uploads_dir, unique_filename)
             file.save(file_path)
+            # 设置上传文件的权限
+            os.chmod(file_path, 0o666)
+            
             app.logger.info(f"Processing file: {file_path}")
 
             try:
@@ -206,7 +217,6 @@ def zerox_ocr():
                 app.logger.info(f"OCR result received successfully")
 
                 # 获取生成的markdown文件路径
-                output_dir = os.path.join(os.getcwd(), 'output')
                 markdown_files = [f for f in os.listdir(output_dir) if f.endswith('.md')]
                 if not markdown_files:
                     return jsonify({'error': '未找到生成的文件'}), 500
@@ -214,6 +224,9 @@ def zerox_ocr():
                 # 获取最新生成的文件
                 latest_file = max(markdown_files, key=lambda x: os.path.getctime(os.path.join(output_dir, x)))
                 markdown_path = os.path.join(output_dir, latest_file)
+                
+                # 确保生成的markdown文件有正确的权限
+                os.chmod(markdown_path, 0o666)
                 
                 app.logger.info(f"Generated markdown file: {markdown_path}")
                 
@@ -245,6 +258,15 @@ def download_markdown(filename):
         if not os.path.exists(file_path):
             app.logger.error(f"File not found: {file_path}")
             return jsonify({'error': '文件不存在'}), 404
+            
+        # 确保文件可读
+        try:
+            with open(file_path, 'r') as f:
+                content = f.read()
+        except PermissionError:
+            app.logger.error(f"Permission denied reading file: {file_path}")
+            # 尝试修复权限
+            os.chmod(file_path, 0o666)
             
         response = send_file(
             file_path,

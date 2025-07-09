@@ -3,6 +3,7 @@ import os
 import asyncio
 import logging
 import traceback
+import uuid
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -65,8 +66,38 @@ async def process_file(file_path, api_key, api_base, model):
 # 如果需要在非异步环境中调用
 def process_file_sync(file_path, api_key, api_base, model):
     try:
-        return asyncio.run(process_file(file_path, api_key, api_base, model))
+        # 确保输出目录存在并有正确的权限
+        output_dir = os.path.join(os.getcwd(), 'output')
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, mode=0o777)
+        else:
+            os.chmod(output_dir, 0o777)
+
+        # 处理文件
+        result = process_file(file_path, api_key, api_base, model)
+        
+        # 生成唯一的输出文件名
+        output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(os.path.basename(file_path))[0]}.md"
+        output_path = os.path.join(output_dir, output_filename)
+        
+        # 写入结果并设置正确的权限
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(f"# OCR 结果\n\n")
+            f.write(f"文件名: {os.path.basename(file_path)}\n")
+            f.write(f"处理时间: {result.completion_time/1000:.2f} 秒\n")
+            f.write(f"输入 tokens: {result.input_tokens}\n")
+            f.write(f"输出 tokens: {result.output_tokens}\n\n")
+            
+            for page in result.pages:
+                f.write(f"## 第 {page.page} 页\n\n")
+                f.write(page.content + "\n\n")
+        
+        # 设置文件权限
+        os.chmod(output_path, 0o666)
+        
+        return result
+        
     except Exception as e:
-        logger.error(f"Error in process_file_sync: {str(e)}")
-        logger.error(traceback.format_exc())
+        logging.error(f"处理文件时出错: {str(e)}")
+        logging.error(traceback.format_exc())
         raise
