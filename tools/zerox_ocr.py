@@ -66,12 +66,9 @@ async def process_file(file_path, api_key, api_base, model):
 # 如果需要在非异步环境中调用
 def process_file_sync(file_path, api_key, api_base, model):
     try:
-        # 确保输出目录存在并有正确的权限
+        # 确保输出目录存在
         output_dir = os.path.join(os.getcwd(), 'output')
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir, mode=0o777)
-        else:
-            os.chmod(output_dir, 0o777)
+        os.makedirs(output_dir, exist_ok=True)
 
         # 处理文件
         result = asyncio.run(process_file(file_path, api_key, api_base, model))
@@ -80,7 +77,7 @@ def process_file_sync(file_path, api_key, api_base, model):
         output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(os.path.basename(file_path))[0]}.md"
         output_path = os.path.join(output_dir, output_filename)
         
-        # 写入结果并设置正确的权限
+        # 写入结果
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(f"# OCR 结果\n\n")
             f.write(f"文件名: {os.path.basename(file_path)}\n")
@@ -92,10 +89,8 @@ def process_file_sync(file_path, api_key, api_base, model):
                 f.write(f"## 第 {page.page} 页\n\n")
                 f.write(page.content + "\n\n")
         
-        # 设置文件权限
-        os.chmod(output_path, 0o666)
-        
-        return result
+        # 返回文件名和处理结果
+        return {'filename': output_filename, 'result': result}
         
     except Exception as e:
         logging.error(f"处理文件时出错: {str(e)}")
