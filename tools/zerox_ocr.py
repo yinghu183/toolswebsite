@@ -1,8 +1,5 @@
 from pyzerox import zerox
-# --- START MODIFICATION ---
-# 1. 导入我们要修改的类
 from pyzerox.models.modellitellm import litellmmodel
-# --- END MODIFICATION ---
 import os
 import asyncio
 import logging
@@ -14,18 +11,14 @@ logger = logging.getLogger(__name__)
 
 async def process_file(file_path, api_key, api_base, model):
     
-    # --- START MODIFICATION ---
-    # 2. 定义一个什么都不做的“傀儡”验证函数
+    # 猴子补丁仍然需要保留，以跳过模型列表的检查
     def do_nothing(self):
-        logger.debug("Skipping the original validate_model() check.")
+        logger.debug("Skipping the original validate_model() check via monkey patch.")
         pass
 
-    # 3. 保存原始的验证函数
     original_validate_model = litellmmodel.validate_model
-    # 4. 用我们的“傀儡”替换掉原始的验证函数
     litellmmodel.validate_model = do_nothing
-    # --- END MODIFICATION ---
-
+    
     try:
         logger.debug(f"Starting to process file: {file_path}")
 
@@ -33,31 +26,37 @@ async def process_file(file_path, api_key, api_base, model):
             raise FileNotFoundError(f"File not found: {file_path}")
 
         file_size = os.path.getsize(file_path)
-        if file_size > 52428800:  # 50MB
+        if file_size > 52428800:
             raise ValueError("File size exceeds limit")
         
         logger.debug(f"File size: {file_size} bytes")
 
+        # 环境变量方式作为备用，但直接传参是关键
         os.environ["OPENAI_API_KEY"] = api_key
         os.environ["OPENAI_API_BASE"] = api_base
-        
         os.environ["VERTEXAI_PROJECT"] = "dummy-project"
         os.environ["VERTEXAI_LOCATION"] = "dummy-location"
 
         output_dir = "./output"
         custom_system_prompt = None
         select_pages = None
-
         os.makedirs(output_dir, exist_ok=True)
 
+        # 准备传递给zerox的参数
         kwargs = {
             "temperature": 0,
             "max_tokens": 16384,
+            # --- START FINAL MODIFICATION ---
+            # 釜底抽薪：将api_key和api_base作为直接参数传递
+            # 这会强制LiteLLM在所有API请求（包括内部的validate_access测试）中
+            # 都使用您自己的聚合服务地址和密钥，而不是OpenAI官方地址。
+            "api_key": api_key,
+            "api_base": api_base
+            # --- END FINAL MODIFICATION ---
         }
 
-        logger.debug(f"Calling zerox with model: {model}")
+        logger.debug(f"Calling zerox with model: {model} and direct api_base/api_key.")
         
-        # 5. 现在这个调用将不会再执行那个烦人的验证了
         result = await zerox(
             file_path=file_path,
             model=model,
@@ -78,12 +77,10 @@ async def process_file(file_path, api_key, api_base, model):
         logger.error(traceback.format_exc())
         raise
     finally:
-        # --- START MODIFICATION ---
-        # 6. 无论成功还是失败，最后都把原始的验证函数恢复回去
-        # 这是一个好习惯，可以防止对程序的其他部分产生意想不到的影响
+        # 恢复原始的验证函数
         litellmmodel.validate_model = original_validate_model
         logger.debug("Restored the original validate_model().")
-        # --- END MODIFICATION ---
+
 
 # process_file_sync 函数保持不变
 def process_file_sync(file_path, api_key, api_base, model, output_path):
