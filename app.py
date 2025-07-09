@@ -314,5 +314,23 @@ def cleanup_uploads():
 def image_watermark():
     return render_template('image_watermark.html')
 
+@app.route('/ai/essay_polishing')
+def essay_polishing_page():
+    # Dify Token for Essay Polishing
+    token = 'XGNUclyu0yzj5eMm'
+    return render_template('ai_tool_page.html', title='作文润色', token=token)
+
+@app.route('/ai/english_dictionary')
+def english_dictionary_page():
+    # Dify Token for English Dictionary
+    token = 'Jwla83F8CmWY0S3M'
+    return render_template('ai_tool_page.html', title='英语词典', token=token)
+
+@app.route('/ai/multi_language_translator')
+def multi_language_translator_page():
+    # Dify Token for Multi-language Translator
+    token = 'YTsXdjIJmlspSSA1'
+    return render_template('ai_tool_page.html', title='多语言翻译', token=token)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)

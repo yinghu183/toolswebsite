@@ -3,17 +3,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const toolsContainer = document.getElementById('tools');
     const aiToolsContainer = document.getElementById('ai-tools');
-    const modal = document.getElementById('modal');
-    const modalBody = document.getElementById('modal-body');
-    const closeBtn = document.getElementsByClassName('close')[0];
 
+    // “实用工具”的点击逻辑（保持不变）
     toolsContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.card');
         if (card) {
             const toolName = card.dataset.tool;
-            
-            // --- START MODIFICATION ---
-            // Changed the logic to open pages in a new tab.
             switch (toolName) {
                 case 'Image Watermark':
                     window.open('/image_watermark', '_blank');
@@ -28,70 +23,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.open('/pinyin_converter', '_blank');
                     break;
                 default:
-                    // Fallback or for other tools you might add
-                    console.log("Tool not configured for new tab yet:", toolName);
+                    console.log("未知的实用工具:", toolName);
                     break;
             }
-            // --- END MODIFICATION ---
         }
     });
 
-    // AI tools still use the modal, so this logic remains.
+    // --- START: 修改 AI 工具的点击逻辑 ---
+    // 不再使用弹窗，而是直接打开新标签页
     aiToolsContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.card');
         if (card) {
             const aiTool = card.dataset.aiTool;
-            loadAITool(aiTool);
-            modal.style.display = 'block';
+            let targetUrl = '';
+            switch (aiTool) {
+                case 'a': // 作文润色
+                    targetUrl = '/ai/essay_polishing';
+                    break;
+                case 'b': // 英语词典
+                    targetUrl = '/ai/english_dictionary';
+                    break;
+                case 'c': // 多语言翻译
+                    targetUrl = '/ai/multi_language_translator';
+                    break;
+                default:
+                    console.log("未知的AI工具:", aiTool);
+                    return; // 如果没有匹配的工具，则不执行任何操作
+            }
+            window.open(targetUrl, '_blank');
         }
     });
+    // --- END: 修改 AI 工具的点击逻辑 ---
 
-    closeBtn.onclick = function() {
-        modal.style.display = 'none';
-        modalBody.innerHTML = '';
-    }
-
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-            modalBody.innerHTML = '';
-        }
-    }
-
-    // This function is now only used for AI tools.
-    function loadAITool(aiTool) {
-        modalBody.innerHTML = ''; // Clear modal content
-
-        let token;
-        let title;
-        switch(aiTool) {
-            case 'a':
-                token = 'XGNUclyu0yzj5eMm';
-                title = '作文润色';
-                break;
-            case 'b':
-                token = 'Jwla83F8CmWY0S3M';
-                title = '英语词典';
-                break;
-            case 'c':
-                token = 'YTsXdjIJmlspSSA1';
-                title = '多语言翻译';
-                break;
-        }
-        
-        let iframe = document.createElement('iframe');
-        iframe.src = `https://dify.141010.xyz/chatbot/${token}`;
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = 'none';
-        iframe.allow = 'microphone';
-        
-        let titleElement = document.createElement('h2');
-        titleElement.textContent = title;
-        titleElement.style.textAlign = 'center';
-        titleElement.style.marginBottom = '20px';
-        
-        modalBody.appendChild(titleElement);
-        modalBody.appendChild(iframe);
-    }
+    // 注意：所有与 modal, closeBtn, loadAITool, window.onclick 相关的代码块现在都可以安全地删除了，
+    // 因为它们不再被使用，这会让您的代码更加干净。
 });
