@@ -20,6 +20,8 @@ services:
     environment:
       - FLASK_ENV=production
       - MAX_CONTENT_LENGTH=52428800  # 50MB in bytes
+      - VERTEXAI_PROJECT=dummy-project
+      - VERTEXAI_LOCATION=us-central1
     ports:
       - "8000:8000"
     command: gunicorn --bind 0.0.0.0:8000 --timeout 300 app:app
