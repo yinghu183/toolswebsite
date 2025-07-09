@@ -25,11 +25,30 @@ document.addEventListener('DOMContentLoaded', function() {
         markdownContent.textContent = '';
         downloadBtn.style.display = 'none';
 
+        // 设置较长的超时时间（3分钟）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 180000);
+
         fetch('/zerox_ocr', {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: controller.signal
         })
-        .then(response => response.json())
+        .then(async response => {
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || '服务器响应错误');
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('服务器返回了非JSON格式的数据');
+            }
+            
+            return response.json();
+        })
         .then(data => {
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
@@ -54,10 +73,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
+            clearTimeout(timeoutId);
             console.error('处理过程中发生错误:', error);
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
-            markdownContent.innerHTML = `<div class="error"><strong>错误:</strong> ${error.message}</div>`;
+            
+            let errorMessage = error.message;
+            if (error.name === 'AbortError') {
+                errorMessage = '请求超时，请重试';
+            } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                errorMessage = '网络连接错误，请检查网络后重试';
+            }
+            
+            markdownContent.innerHTML = `<div class="error"><strong>错误:</strong> ${errorMessage}</div>`;
             downloadBtn.style.display = 'none';
         });
     });
