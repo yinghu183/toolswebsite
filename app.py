@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, make_response
 from tools.pinyin_converter import process_names
 from tools.irr_calculator import calculate_real_irr
 from tools.watermark import add_watermark
@@ -174,6 +174,7 @@ def zerox_ocr():
             try:
                 result = process_file_sync(file_path, api_key, api_base, model)
                 app.logger.info(f"OCR result received successfully")
+                app.logger.debug(f"Raw OCR result: {result}")  # 添加原始结果日志
 
                 # 处理completion_time
                 completion_time = float(result.completion_time)
@@ -188,7 +189,11 @@ def zerox_ocr():
                     markdown_content += f"输入 tokens: {result.input_tokens}\n"
                     markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
 
+                    # 记录页面数量
+                    app.logger.info(f"Total pages: {len(result.pages)}")
+
                     for page in result.pages:
+                        app.logger.debug(f"Processing page {page.page}, content length: {len(page.content)}")
                         markdown_content += f"## 第 {page.page} 页\n\n"
                         markdown_content += page.content + "\n\n"
 
@@ -202,14 +207,14 @@ def zerox_ocr():
                     response_data = {'markdown': markdown_content}
                     # 记录JSON序列化后的大小
                     from flask import json
-                    json_response = json.dumps(response_data)
+                    json_response = json.dumps(response_data, ensure_ascii=False)
                     app.logger.info("JSON response length: %d", len(json_response))
                     
                     app.logger.info("Sending response...")
-                    response = jsonify(response_data)
-                    response.headers['Content-Type'] = 'application/json'
+                    response = make_response(json_response)
+                    response.headers['Content-Type'] = 'application/json; charset=utf-8'
                     app.logger.info("Response prepared successfully")
-                    return response, 200
+                    return response
 
                 except Exception as e:
                     app.logger.error(f"Error generating markdown content: {str(e)}")
