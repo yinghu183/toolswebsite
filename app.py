@@ -1,3 +1,5 @@
+# app.py
+
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, make_response
 from werkzeug.middleware.proxy_fix import ProxyFix
 from tools.pinyin_converter import process_names
@@ -19,7 +21,7 @@ import subprocess
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-# (CORS, after_request, logging, and TOOLS list remain the same)
+# (CORS, logging, etc. remain the same)
 CORS(app, resources={
     r"/*": {
         "origins": "*",
@@ -45,19 +47,17 @@ TOOLS = [
 ]
 app.config['MAX_CONTENT_LENGTH'] = 52428800
 
-# --- START MODIFICATION ---
-# 升级版、更智能的文件转换函数
+# (File conversion function remains the same)
 def convert_to_pdf_if_needed(file_path):
     """
-    检查文件类型，并使用最合适的工具将其转换为PDF。
-    - Office文档和文本文档使用 LibreOffice。
-    - 图片文件使用 GraphicsMagick。
-    返回最终可用于OCR的PDF文件路径。
+    Checks file type and converts to PDF using the best tool.
+    - Office/text docs use LibreOffice.
+    - Images use GraphicsMagick.
+    Returns the path to the final PDF file ready for OCR.
     """
     file_name = os.path.basename(file_path)
     file_ext = os.path.splitext(file_name)[1].lower()
     
-    # 1. 如果已经是PDF，直接返回
     if file_ext == '.pdf':
         app.logger.info(f"File '{file_name}' is already a PDF. No conversion needed.")
         return file_path
@@ -66,20 +66,16 @@ def convert_to_pdf_if_needed(file_path):
     pdf_filename = os.path.splitext(file_name)[0] + '.pdf'
     pdf_path = os.path.join(output_dir, pdf_filename)
     
-    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', 'tiff']
+    image_extensions = ['.jpg', '.jpeg', '.png', 'bmp', 'gif', 'tiff']
 
     try:
-        # 2. 如果是图片，使用 GraphicsMagick (gm)
         if file_ext in image_extensions:
             app.logger.info(f"Converting image '{file_name}' to PDF using GraphicsMagick...")
-            # 使用 `gm convert` 命令
             command = ["gm", "convert", file_path, pdf_path]
             result = subprocess.run(command, capture_output=True, text=True, timeout=60)
             if result.returncode != 0:
                 app.logger.error(f"GraphicsMagick conversion failed. Stderr: {result.stderr}")
                 raise RuntimeError(f"Image conversion to PDF failed: {result.stderr}")
-
-        # 3. 如果是其他支持的文档，使用 LibreOffice
         else:
             app.logger.info(f"Converting document '{file_name}' to PDF using LibreOffice...")
             command = ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", output_dir, file_path]
@@ -88,7 +84,6 @@ def convert_to_pdf_if_needed(file_path):
                 app.logger.error(f"LibreOffice conversion failed. Stderr: {result.stderr}")
                 raise RuntimeError(f"Document conversion to PDF failed: {result.stderr}")
 
-        # 4. 确认转换后的PDF文件存在
         if not os.path.exists(pdf_path):
             app.logger.error(f"Conversion command succeeded, but output PDF not found at {pdf_path}")
             raise FileNotFoundError("Converted PDF file not found.")
@@ -103,14 +98,24 @@ def convert_to_pdf_if_needed(file_path):
     except Exception as e:
         app.logger.error(f"An exception occurred during file conversion: {e}")
         raise
-# --- END MODIFICATION ---
 
 
-# (home, pinyin, irr, watermark, download等路由保持原样)
 @app.route('/')
 def home():
     return render_template('index.html', tools=TOOLS)
 
+# --- START MODIFICATION ---
+# ADDED: New routes to serve the dedicated tool pages.
+@app.route('/irr_calculator')
+def irr_calculator_page():
+    return render_template('irr_calculator.html')
+
+@app.route('/pinyin_converter')
+def pinyin_converter_page():
+    return render_template('pinyin_converter.html')
+# --- END MODIFICATION ---
+
+# (API endpoints like /convert_pinyin and /calculate_irr remain unchanged)
 @app.route('/convert_pinyin', methods=['POST'])
 def convert_pinyin():
     try:
@@ -146,7 +151,8 @@ def calculate_irr():
     except Exception as e:
         logging.error(f"IRR计算出现意外错误: {str(e)}")
         return jsonify({'error': '发生意外错误，请检查输入数据'}), 500
-
+        
+# (The rest of the file: watermark, ocr, download, etc. remains the same)
 @app.route('/add_watermark', methods=['POST'])
 def watermark():
     try:
@@ -201,7 +207,6 @@ if not os.path.exists(output_dir):
 else:
     os.chmod(output_dir, 0o777)
 
-# zerox_ocr 路由保持不变，因为它现在调用了新的转换函数
 @app.route('/zerox_ocr', methods=['GET', 'POST', 'OPTIONS'])
 def zerox_ocr():
     if request.method == 'OPTIONS':
@@ -213,7 +218,6 @@ def zerox_ocr():
             return jsonify({'error': '没有上传文件'}), 400
 
         file = request.files['file']
-        # ... (表单数据获取等代码不变) ...
         api_key = request.form.get('apiKey')
         api_base = request.form.get('apiBase')
         model = request.form.get('model')
@@ -233,7 +237,6 @@ def zerox_ocr():
             os.makedirs('uploads', exist_ok=True)
             file.save(upload_path)
             
-            # 关键改动：调用我们新的、更智能的转换函数
             ocr_ready_file_path = convert_to_pdf_if_needed(upload_path)
             
             output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(original_filename)[0]}.md"
@@ -271,7 +274,6 @@ def zerox_ocr():
 
     return render_template('zerox_ocr.html')
 
-# (check_ocr_status, download_markdown, cleanup_uploads, image_watermark, and __main__ block remain the same)
 @app.route('/check_ocr_status/<filename>')
 def check_ocr_status(filename):
     file_path = os.path.join('output', filename)

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼音转换器 - 多功能工具箱</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pinyin_converter.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="tool-page-container">
+        <header class="tool-page-header">
+            <h1>姓名转拼音</h1>
+            <p>将中文姓名批量转换为带音调的拼音</p>
+        </header>
+
+        <main class="tool-content-wrapper">
+            <form id="pinyinForm" class="new-tool-form">
+                <div class="new-input-group">
+                    <label for="text">输入姓名</label>
+                    <textarea id="text" name="text" placeholder="每行一个姓名，例如：&#10;张三&#10;李四" required></textarea>
+                </div>
+                <button type="submit" class="new-submit-btn">开始转换</button>
+            </form>
+            
+            <div id="resultContainer" class="new-tool-result-pinyin" style="display: none;">
+                <h3>转换结果:</h3>
+                <pre id="pinyinResult"></pre>
+                <p id="resultError" class="result-error"></p>
+            </div>
+        </main>
+
+        <footer class="tool-page-footer">
+            <a href="{{ url_for('home') }}">返回主页</a>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('pinyinForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const resultContainer = document.getElementById('resultContainer');
+            const pinyinResultEl = document.getElementById('pinyinResult');
+            const errorEl = document.getElementById('resultError');
+            
+            pinyinResultEl.textContent = '';
+            errorEl.textContent = '';
+
+            const formData = new FormData(this);
+            const data = { text: formData.get('text') };
+
+            fetch('/convert_pinyin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultContainer.style.display = 'block';
+                if (data.error) {
+                    errorEl.textContent = `转换出错: ${data.error}`;
+                } else {
+                    pinyinResultEl.innerHTML = Array.isArray(data.result) ? data.result.join('\n') : data.result;
+                }
+            })
+            .catch(error => {
+                resultContainer.style.display = 'block';
+                errorEl.textContent = '无法连接到服务器，请稍后重试。';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+/* static/css/irr_calculator.css */
+
+/* 专用于IRR计算器页面的样式 */
+.tool-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.tool-page-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.tool-page-header h1 {
+    font-size: 2.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.tool-page-header p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.tool-content-wrapper {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2.5rem;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+.new-tool-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.new-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.new-input-group label {
+    color: white;
+    font-size: 1rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+}
+
+.new-tool-form input {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    color: white;
+    font-size: 1.1rem;
+    font-family: 'Roboto', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.new-tool-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.new-tool-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+}
+
+.new-submit-btn {
+    background-color: #ffffff;
+    color: var(--primary-color);
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+.new-submit-btn:hover {
+    background-color: #ecf0f1;
+    color: var(--secondary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.new-tool-result {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-around;
+    color: white;
+    text-align: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.new-tool-result .result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.new-tool-result .result-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.new-tool-result .result-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.result-error {
+    color: #ffdddd;
+    width: 100%;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.tool-page-footer {
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.tool-page-footer a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.tool-page-footer a:hover {
+    color: white;
+    text-decoration: underline;
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRR 计算器 - 多功能工具箱</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/irr_calculator.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="tool-page-container">
+        <header class="tool-page-header">
+            <h1>IRR 计算器</h1>
+            <p>计算信用卡账单分期的真实年化利率</p>
+        </header>
+        
+        <main class="tool-content-wrapper">
+            <form id="irrForm" class="new-tool-form">
+                <div class="new-input-group">
+                    <label for="principal">分期总本金 (元)</label>
+                    <input type="number" id="principal" name="principal" placeholder="例如: 12000" step="0.01" required>
+                </div>
+                <div class="new-input-group">
+                    <label for="payment">每期还款金额 (元)</label>
+                    <input type="number" id="payment" name="payment" placeholder="例如: 1060" step="0.01" required>
+                </div>
+                <div class="new-input-group">
+                    <label for="periods">总还款期数 (月)</label>
+                    <input type="number" id="periods" name="periods" placeholder="例如: 12" step="1" required>
+                </div>
+                <button type="submit" class="new-submit-btn">开始计算</button>
+            </form>
+            
+            <div id="resultContainer" class="new-tool-result" style="display: none;">
+                <div class="result-item">
+                    <span class="result-label">月化真实利率</span>
+                    <span id="monthlyRate" class="result-value"></span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">年化真实利率</span>
+                    <span id="annualRate" class="result-value"></span>
+                </div>
+                 <p id="resultError" class="result-error"></p>
+            </div>
+        </main>
+
+        <footer class="tool-page-footer">
+            <a href="{{ url_for('home') }}">返回主页</a>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('irrForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const resultContainer = document.getElementById('resultContainer');
+            const annualRateEl = document.getElementById('annualRate');
+            const monthlyRateEl = document.getElementById('monthlyRate');
+            const errorEl = document.getElementById('resultError');
+
+            annualRateEl.textContent = '';
+            monthlyRateEl.textContent = '';
+            errorEl.textContent = '';
+
+            const formData = new FormData(this);
+            const data = {
+                principal: parseFloat(formData.get('principal')),
+                payment: parseFloat(formData.get('payment')),
+                periods: parseInt(formData.get('periods'))
+            };
+
+            fetch('/calculate_irr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultContainer.style.display = 'flex';
+                if (data.error) {
+                    errorEl.textContent = `计算出错: ${data.error}`;
+                } else {
+                    annualRateEl.textContent = data.result.annual_irr;
+                    monthlyRateEl.textContent = data.result.monthly_irr;
+                }
+            })
+            .catch(error => {
+                resultContainer.style.display = 'block';
+                errorEl.textContent = '无法连接到服务器，请稍后重试。';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

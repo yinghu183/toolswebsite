@@ -1,3 +1,5 @@
+// static/js/main.js
+
 document.addEventListener('DOMContentLoaded', function() {
     const toolsContainer = document.getElementById('tools');
     const aiToolsContainer = document.getElementById('ai-tools');
@@ -9,17 +11,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = e.target.closest('.card');
         if (card) {
             const toolName = card.dataset.tool;
-            if (toolName === 'Image Watermark') {
-                window.open('/image_watermark', '_blank');
-            } else if (toolName === 'Zerox OCR') {
-                window.open('/zerox_ocr', '_blank');
-            } else {
-                loadToolInterface(toolName);
-                modal.style.display = 'block';
+            
+            // --- START MODIFICATION ---
+            // Changed the logic to open pages in a new tab.
+            switch (toolName) {
+                case 'Image Watermark':
+                    window.open('/image_watermark', '_blank');
+                    break;
+                case 'Zerox OCR':
+                    window.open('/zerox_ocr', '_blank');
+                    break;
+                case 'Irr Calculator':
+                    window.open('/irr_calculator', '_blank');
+                    break;
+                case 'Pinyin Converter':
+                    window.open('/pinyin_converter', '_blank');
+                    break;
+                default:
+                    // Fallback or for other tools you might add
+                    console.log("Tool not configured for new tab yet:", toolName);
+                    break;
             }
+            // --- END MODIFICATION ---
         }
     });
 
+    // AI tools still use the modal, so this logic remains.
     aiToolsContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.card');
         if (card) {
@@ -41,102 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function loadToolInterface(toolName) {
-        modalBody.innerHTML = '';
-        
-        if (toolName === 'Irr Calculator') {
-            modalBody.innerHTML = `
-                <h2>信用卡账单分期真实利率计算器</h2>
-                <div class="tool-container irr-calculator">
-                    <form id="toolForm" class="tool-form">
-                        <div class="input-group">
-                            <label for="principal">分期本金</label>
-                            <input type="number" id="principal" name="principal" step="0.01" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="payment">每期还款本息</label>
-                            <input type="number" id="payment" name="payment" step="0.01" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="periods">还款期数</label>
-                            <input type="number" id="periods" name="periods" step="1" required>
-                        </div>
-                        <button type="submit" class="submit-btn">计算</button>
-                    </form>
-                    <div id="toolResult" class="tool-result">
-                        <div class="result-item">
-                            <span>年化真实利率</span>
-                            <span id="annualRate"></span>
-                        </div>
-                        <div class="result-item">
-                            <span>月化真实利率</span>
-                            <span id="monthlyRate"></span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else if (toolName === 'Pinyin Converter') {
-            modalBody.innerHTML = `
-                <h2>姓名转拼音</h2>
-                <div class="tool-container pinyin-converter">
-                    <form id="toolForm" class="tool-form">
-                        <div class="input-group">
-                            <label for="text">输入姓名(以空格分开)</label>
-                            <textarea id="text" name="text" required></textarea>
-                        </div>
-                        <button type="submit" class="submit-btn">转换</button>
-                    </form>
-                    <div id="toolResult" class="tool-result"></div>
-                </div>
-            `;
-        }
-
-        const toolForm = document.getElementById('toolForm');
-
-        toolForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(toolForm);
-            const data = Object.fromEntries(formData.entries());
-
-            if (toolName === 'Irr Calculator') {
-                data.principal = parseFloat(data.principal);
-                data.payment = parseFloat(data.payment);
-                data.periods = parseInt(data.periods);
-            }
-
-            let endpoint = toolName === 'Pinyin Converter' ? '/convert_pinyin' : '/calculate_irr';
-
-            fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-            .then(response => response.json())
-            .then(data => {
-                const toolResult = document.getElementById('toolResult');
-                if (data.error) {
-                    toolResult.innerHTML = `<p class="error">${data.error}</p>`;
-                } else {
-                    if (toolName === 'Pinyin Converter') {
-                        toolResult.innerHTML = Array.isArray(data.result) ? data.result.join('<br>') : data.result;
-                    } else if (toolName === 'Irr Calculator') {
-                        document.getElementById('annualRate').textContent = data.result.annual_irr;
-                        document.getElementById('monthlyRate').textContent = data.result.monthly_irr;
-                    }
-                }
-                toolResult.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('toolResult').innerHTML = '<p class="error">操作出错，请重试</p>';
-            });
-        });
-    }
-
+    // This function is now only used for AI tools.
     function loadAITool(aiTool) {
-        modalBody.innerHTML = ''; // 清空模态框内容
+        modalBody.innerHTML = ''; // Clear modal content
 
         let token;
         let title;
