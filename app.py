@@ -12,6 +12,7 @@ import asyncio
 import traceback
 from pyzerox.core.types import ZeroxOutput
 from flask_cors import CORS
+import threading
 
 app = Flask(__name__)
 
@@ -203,30 +204,62 @@ def zerox_ocr():
             file.save(file_path)
 
             try:
-                # 处理文件
-                result = process_file_sync(file_path, api_key, api_base, model)
-                app.logger.info(f"OCR result received successfully")
+                # 生成唯一的输出文件名
+                output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(filename)[0]}.md"
                 
-                # 返回下载链接
-                download_url = url_for('download_markdown', filename=result['filename'], _external=True)
+                # 立即返回文件名
+                download_url = url_for('download_markdown', filename=output_filename, _external=True)
+                
+                # 在后台处理OCR
+                def process_ocr():
+                    try:
+                        result = process_file_sync(file_path, api_key, api_base, model)
+                        app.logger.info(f"OCR result received successfully")
+                    except Exception as e:
+                        app.logger.error(f"Error in background OCR process: {str(e)}")
+                    finally:
+                        # 清理上传的文件
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                
+                # 启动后台线程处理OCR
+                thread = threading.Thread(target=process_ocr)
+                thread.daemon = True
+                thread.start()
+                
                 return jsonify({
                     'success': True,
-                    'message': 'OCR处理完成',
+                    'message': 'OCR处理已开始，请稍后刷新页面查看结果',
                     'download_url': download_url
                 })
 
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
                 app.logger.error(traceback.format_exc())
-                return jsonify({'error': f"处理文件时出错 - {str(e)}"}), 500
-            finally:
+                # 清理上传的文件
                 if os.path.exists(file_path):
                     os.remove(file_path)
+                return jsonify({'error': f"处理文件时出错 - {str(e)}"}), 500
         else:
             app.logger.error(f"Invalid file type: {file.filename}")
             return jsonify({'error': '不支持的文件类型'}), 400
 
     return render_template('zerox_ocr.html')
+
+@app.route('/check_ocr_status/<filename>')
+def check_ocr_status(filename):
+    file_path = os.path.join('output', filename)
+    if os.path.exists(file_path):
+        # 文件存在，说明处理完成
+        return jsonify({
+            'status': 'completed',
+            'download_url': url_for('download_markdown', filename=filename, _external=True)
+        })
+    else:
+        # 文件不存在，说明还在处理中
+        return jsonify({
+            'status': 'processing'
+        })
 
 @app.route('/download_markdown/<filename>')
 def download_markdown(filename):

@@ -25,68 +25,77 @@ document.addEventListener('DOMContentLoaded', function() {
         markdownContent.textContent = '';
         downloadBtn.style.display = 'none';
 
-        // 设置较长的超时时间（3分钟）
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000);
-
         fetch('/zerox_ocr', {
             method: 'POST',
-            body: formData,
-            signal: controller.signal
+            body: formData
         })
-        .then(async response => {
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error(text || '服务器响应错误');
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('服务器返回了非JSON格式的数据');
-            }
-            
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            loadingDiv.style.display = 'none';
-            resultDiv.style.display = 'block';
-            
             if (data.error) {
                 throw new Error(data.error);
             }
 
             if (data.success && data.download_url) {
                 markdownContent.innerHTML = `
-                    <div class="success">
+                    <div class="info">
                         <p>${data.message}</p>
-                        <p>文件已准备就绪，请点击下方按钮下载：</p>
+                        <p>正在处理中，请稍候...</p>
                     </div>
                 `;
-                downloadBtn.style.display = 'inline-block';
-                downloadBtn.onclick = function() {
-                    window.location.href = data.download_url;
-                };
+                
+                // 开始轮询检查处理状态
+                checkStatus(data.download_url.split('/').pop());
             } else {
-                throw new Error('处理成功但未获得下载链接');
+                throw new Error('处理失败，请重试');
             }
         })
         .catch(error => {
-            clearTimeout(timeoutId);
             console.error('处理过程中发生错误:', error);
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
-            
-            let errorMessage = error.message;
-            if (error.name === 'AbortError') {
-                errorMessage = '请求超时，请重试';
-            } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-                errorMessage = '网络连接错误，请检查网络后重试';
-            }
-            
-            markdownContent.innerHTML = `<div class="error"><strong>错误:</strong> ${errorMessage}</div>`;
+            markdownContent.innerHTML = `<div class="error"><strong>错误:</strong> ${error.message}</div>`;
             downloadBtn.style.display = 'none';
         });
     });
+
+    function checkStatus(filename) {
+        const checkInterval = setInterval(() => {
+            fetch(`/check_ocr_status/${filename}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'completed') {
+                    clearInterval(checkInterval);
+                    loadingDiv.style.display = 'none';
+                    resultDiv.style.display = 'block';
+                    markdownContent.innerHTML = `
+                        <div class="success">
+                            <p>OCR处理完成！</p>
+                            <p>文件已准备就绪，请点击下方按钮下载：</p>
+                        </div>
+                    `;
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.onclick = function() {
+                        window.location.href = data.download_url;
+                    };
+                }
+            })
+            .catch(error => {
+                console.error('检查状态时出错:', error);
+            });
+        }, 2000); // 每2秒检查一次
+
+        // 设置30分钟后停止检查
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (loadingDiv.style.display !== 'none') {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                markdownContent.innerHTML = `
+                    <div class="error">
+                        <strong>错误:</strong> 处理时间过长，请刷新页面重试
+                    </div>
+                `;
+            }
+        }, 30 * 60 * 1000);
+    }
 });
