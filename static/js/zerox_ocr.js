@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const fileInput = document.getElementById('document');
         if (!fileInput.files || fileInput.files.length === 0) {
             resultDiv.innerHTML = `<div class="error">请选择一个文件。</div>`;
+            resultDiv.style.display = 'block';
             return;
         }
         formData.append('file', fileInput.files[0]);
@@ -27,29 +28,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch('/zerox_ocr', {
             method: 'POST',
-            body: formData,
+            body: formData
         })
         .then(response => {
+            const contentType = response.headers.get('content-type');
             if (!response.ok) {
-                return response.json().then(errorData => {
-                    throw new Error(errorData.error || '发生未知服务器错误。');
-                });
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error || '服务器处理失败');
+                    });
+                } else {
+                    throw new Error('服务器响应错误');
+                }
+            }
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('服务器返回了非JSON格式的数据');
             }
             return response.json();
         })
         .then(data => {
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
+            
+            if (!data || typeof data !== 'object') {
+                throw new Error('服务器返回了无效的数据格式');
+            }
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
             if (data.markdown) {
                 fullMarkdown = data.markdown;
-                if (window.marked) {
-                    markdownContent.innerHTML = marked.parse(data.markdown);
-                } else {
+                try {
+                    if (window.marked) {
+                        markdownContent.innerHTML = marked.parse(data.markdown);
+                    } else {
+                        markdownContent.textContent = data.markdown;
+                    }
+                    downloadBtn.style.display = 'inline-block';
+                } catch (error) {
+                    console.error('Markdown解析错误:', error);
                     markdownContent.textContent = data.markdown;
                 }
-                downloadBtn.style.display = 'inline-block';
             } else {
-                throw new Error('从服务器收到了无效的数据格式。');
+                throw new Error('服务器返回的数据中没有markdown内容');
             }
         })
         .catch(error => {
@@ -67,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'document.md';
+            a.download = 'ocr_result.md';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

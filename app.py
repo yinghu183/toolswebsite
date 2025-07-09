@@ -173,29 +173,40 @@ def zerox_ocr():
 
             try:
                 result = process_file_sync(file_path, api_key, api_base, model)
-                app.logger.info(f"OCR result: {result}")
-                app.logger.info(f"completion_time raw: {result.completion_time} (type: {type(result.completion_time)})")
+                app.logger.info(f"OCR result received successfully")
 
-                completion_time = result.completion_time
+                # 处理completion_time
+                completion_time = float(result.completion_time)
                 if completion_time > 1000:
                     completion_time = completion_time / 1000
 
-                markdown_content = f"# OCR 结果\n\n"
-                markdown_content += f"文件名: {result.file_name}\n"
-                markdown_content += f"处理时间: {completion_time:.2f} 秒\n"
-                markdown_content += f"输入 tokens: {result.input_tokens}\n"
-                markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
+                # 构建markdown内容
+                try:
+                    markdown_content = f"# OCR 结果\n\n"
+                    markdown_content += f"文件名: {result.file_name}\n"
+                    markdown_content += f"处理时间: {completion_time:.2f} 秒\n"
+                    markdown_content += f"输入 tokens: {result.input_tokens}\n"
+                    markdown_content += f"输出 tokens: {result.output_tokens}\n\n"
 
-                for page in result.pages:
-                    markdown_content += f"## 第 {page.page} 页\n\n"
-                    markdown_content += page.content + "\n\n"
+                    for page in result.pages:
+                        markdown_content += f"## 第 {page.page} 页\n\n"
+                        markdown_content += page.content + "\n\n"
 
-                return jsonify({'markdown': markdown_content}), 200
+                    # 确保markdown_content是有效的字符串
+                    markdown_content = markdown_content.replace('\x00', '')  # 移除空字符
+                    
+                    app.logger.info("Markdown content generated successfully")
+                    return jsonify({'markdown': markdown_content}), 200
+
+                except Exception as e:
+                    app.logger.error(f"Error generating markdown content: {str(e)}")
+                    app.logger.error(traceback.format_exc())
+                    return jsonify({'error': f"生成markdown内容时出错 - {str(e)}"}), 500
 
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
                 app.logger.error(traceback.format_exc())
-                return jsonify({'error': f"处理文件时出错 - {str(e)}"}), 400
+                return jsonify({'error': f"处理文件时出错 - {str(e)}"}), 500
             finally:
                 if os.path.exists(file_path):
                     os.remove(file_path)
