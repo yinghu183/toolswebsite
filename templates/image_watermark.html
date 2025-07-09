@@ -3,77 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图片水印工具</title>
+    <title>图片水印工具 - 多功能工具箱</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/image_watermark.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <header>
+    <div class="tool-page-container">
+        <header class="tool-page-header">
             <h1>图片水印工具</h1>
+            <p>为您的图片添加实时的、可定制的文字水印</p>
         </header>
-        <main id="content">
-            <div class="watermark-container">
-                <div class="watermark-preview-section">
-                    <div class="preview-wrapper">
-                        <img id="previewImage" alt="预览图" />
+
+        <main class="watermark-tool-wrapper">
+            <section class="preview-area">
+                <div class="canvas-container">
+                    <canvas id="previewCanvas"></canvas>
+                </div>
+            </section>
+
+            <section class="settings-area">
+                <form id="toolForm" class="new-tool-form">
+                    <div class="input-group">
+                        <label for="imageFile"><i class="fas fa-image"></i> 选择图片</label>
+                        <div class="file-input-display">
+                             <button type="button" class="file-input-button" onclick="document.getElementById('imageFile').click();">上传文件</button>
+                             <span id="fileName">未选择文件</span>
+                        </div>
+                        <input type="file" id="imageFile" name="image" accept="image/*" required style="display:none;">
                     </div>
-                </div>
-                <div class="watermark-form-section">
-                    <form id="toolForm" class="tool-form">
-                        <div class="input-group">
-                            <label for="image">
-                                <i class="fas fa-image"></i> 选择图片
-                            </label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="image" name="image" accept="image/*" required>
-                                <span class="file-name">未选择文件</span>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label for="mark">
-                                <i class="fas fa-font"></i> 水印文字
-                            </label>
-                            <input type="text" id="mark" name="mark" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="color">
-                                <i class="fas fa-palette"></i> 水印颜色
-                            </label>
-                            <input type="color" id="color" name="color" value="#000000">
-                        </div>
-                        <div class="input-group">
-                            <label for="size">
-                                <i class="fas fa-text-height"></i> 字体大小: <span id="sizeValue">50</span>
-                            </label>
-                            <input type="range" id="size" name="size" min="10" max="100" value="50">
-                        </div>
-                        <div class="input-group">
-                            <label for="opacity">
-                                <i class="fas fa-low-vision"></i> 透明度: <span id="opacityValue">0.5</span>
-                            </label>
-                            <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.1" value="0.5">
-                        </div>
-                        <div class="input-group">
-                            <label for="angle">
-                                <i class="fas fa-redo"></i> 旋转角度: <span id="angleValue">30</span>°
-                            </label>
-                            <input type="range" id="angle" name="angle" min="0" max="360" value="30">
-                        </div>
-                        <button type="submit" class="submit-btn">
-                            <i class="fas fa-magic"></i> 添加水印
-                        </button>
-                        <div id="resultArea" class="result-area" style="display: none;">
-                            <p id="resultMessage"></p>
-                            <button id="downloadBtn" class="download-btn">
-                                <i class="fas fa-download"></i> 下载处理后的图片
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+
+                    <div class="input-group">
+                        <label for="mark"><i class="fas fa-font"></i> 水印文字</label>
+                        <input type="text" id="mark" name="mark" value="仅供测试" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="color"><i class="fas fa-palette"></i> 水印颜色</label>
+                        <input type="color" id="color" name="color" value="#ffffff">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="size"><i class="fas fa-text-height"></i> 字体大小: <span id="sizeValue">40</span>px</label>
+                        <input type="range" id="size" name="size" min="10" max="150" value="40">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="opacity"><i class="fas fa-low-vision"></i> 透明度: <span id="opacityValue">0.4</span></label>
+                        <input type="range"id="opacity" name="opacity" min="0.1" max="1" step="0.1" value="0.4">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="angle"><i class="fas fa-redo"></i> 旋转角度: <span id="angleValue">30</span>°</label>
+                        <input type="range" id="angle" name="angle" min="0" max="90" value="30">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="space"><i class="fas fa-arrows-alt-h"></i> 水印间距: <span id="spaceValue">75</span>px</label>
+                        <input type="range" id="space" name="space" min="20" max="200" value="75">
+                    </div>
+
+                    <button type="submit" class="submit-btn"><i class="fas fa-magic"></i> 生成并下载图片</button>
+                    <div id="resultArea" class="result-area" style="display: none;">
+                        <p id="resultMessage"></p>
+                        <a id="downloadBtn" class="download-btn" style="display: none;"><i class="fas fa-download"></i> 下载处理后的图片</a>
+                    </div>
+                </form>
+            </section>
         </main>
+         <footer class="tool-page-footer">
+            <a href="{{ url_for('home') }}">返回主页</a>
+        </footer>
     </div>
     <script src="{{ url_for('static', filename='js/image_watermark.js') }}"></script>
 </body>
