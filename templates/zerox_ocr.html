@@ -4,41 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档OCR</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ocr_style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>文档OCR</h1>
-        <form id="ocrForm">
-            <div class="form-group">
-                <label for="apiKey">API Key:</label>
-                <input type="password" id="apiKey" name="apiKey" required>
-            </div>
-            <div class="form-group">
-                <label for="apiBase">API Base (可选):</label>
-                <input type="text" id="apiBase" name="apiBase" placeholder="https://api.openai.com/v1">
-            </div>
-            <div class="form-group">
-                <label for="model">模型:</label>
-                <input type="text" id="model" name="model" value="gpt-4-vision-preview" required>
-            </div>
-            <div class="form-group">
-                <label for="document">选择文档:</label>
-                <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.txt,.rtf,.odt,.ods,.odp" required>
-            </div>
-            <button type="submit">开始处理</button>
-        </form>
+    <main class="ocr-container" id="ocr-container">
+        
+        <header class="ocr-header">
+            <h1>文档OCR</h1>
+            <p>上传文档，提取文字，轻松高效。</p>
+        </header>
 
-        <div id="loading" style="display: none;">
-            <p>正在处理文档，请稍候...</p>
-            <div class="spinner"></div>
-        </div>
+        <section class="ocr-form-wrapper" id="ocr-form-wrapper">
+            <form id="ocrForm">
+                <div class="form-group">
+                    <label for="apiKey">API Key:</label>
+                    <input type="password" id="apiKey" name="apiKey" required>
+                </div>
+                <div class="form-group">
+                    <label for="apiBase">API Base (选填):</label>
+                    <input type="text" id="apiBase" name="apiBase" placeholder="https://api.openai.com/v1">
+                </div>
+                <div class="form-group">
+                    <label for="model">模型:</label>
+                    <input type="text" id="model" name="model" value="gpt-4-vision-preview" required>
+                </div>
+                <div class="form-group">
+                    <label for="document">选择文档:</label>
+                    <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.txt,.rtf,.odt,.ods,.odp" required>
+                </div>
+                <button type="submit" class="button-primary">开始处理</button>
+            </form>
+        </section>
 
-        <div id="result" style="display: none;">
-            <div id="markdown-content"></div>
-            <button id="download-btn" style="display: none;">下载结果</button>
-        </div>
-    </div>
+        <section class="ocr-status-wrapper">
+            <div class="ocr-status ocr-processing" id="ocr-processing">
+                <div class="spinner"></div>
+                <p>正在处理文件: <strong id="processing-filename"></strong></p>
+                <p class="status-subtext">这可能需要一些时间，请保持页面开启。</p>
+            </div>
+
+            <div class="ocr-status ocr-success" id="ocr-success">
+                <svg class="icon-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <h2>处理完成！</h2>
+                <p>文件已准备就绪，请点击下载。</p>
+                <button class="button-primary" id="download-btn">下载结果</button>
+            </div>
+
+            <div class="ocr-status ocr-error" id="ocr-error">
+                <svg class="icon-error" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <h2>发生错误</h2>
+                <p id="error-message"></p>
+                <button class="button-secondary" id="reset-btn">返回重试</button>
+            </div>
+        </section>
+        
+    </main>
 
     <script src="{{ url_for('static', filename='js/zerox_ocr.js') }}"></script>
 </body>
