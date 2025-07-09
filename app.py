@@ -206,14 +206,17 @@ def zerox_ocr():
             try:
                 # 生成唯一的输出文件名
                 output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(filename)[0]}.md"
+                # 生成完整的输出路径
+                output_file_path = os.path.join('output', output_filename)
                 
-                # 立即返回文件名
+                # 生成给前端的下载URL
                 download_url = url_for('download_markdown', filename=output_filename, _external=True)
                 
                 # 在后台处理OCR
                 def process_ocr():
                     try:
-                        result = process_file_sync(file_path, api_key, api_base, model)
+                        # 把完整的输出路径传递给处理函数
+                        result = process_file_sync(file_path, api_key, api_base, model, output_file_path)
                         app.logger.info(f"OCR result received successfully")
                     except Exception as e:
                         app.logger.error(f"Error in background OCR process: {str(e)}")
