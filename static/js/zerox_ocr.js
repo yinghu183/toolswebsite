@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const markdownContent = document.getElementById('markdown-content');
     const downloadBtn = document.getElementById('download-btn');
 
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', async function(event) {
         event.preventDefault();
 
         const formData = new FormData();
@@ -20,28 +20,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         formData.append('file', fileInput.files[0]);
 
-        loadingDiv.style.display = 'block';
-        resultDiv.style.display = 'block';  // 显示结果区域
-        markdownContent.innerHTML = '<div class="info">正在上传文件...</div>';
-        downloadBtn.style.display = 'none';
+        try {
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'block';
+            markdownContent.innerHTML = '<div class="info">正在上传文件...</div>';
+            downloadBtn.style.display = 'none';
 
-        fetch('/zerox_ocr', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
+            const response = await fetch('/zerox_ocr', {
+                method: 'POST',
+                body: formData
+            });
+
             if (!response.ok) {
-                throw new Error('服务器响应错误');
+                throw new Error(`服务器响应错误: ${response.status}`);
             }
-            return response.json();
-        })
-        .then(data => {
+
+            const data = await response.json();
+            
             if (data.error) {
                 throw new Error(data.error);
-            }
-
-            if (!data.success) {
-                throw new Error('处理失败，请重试');
             }
 
             // 显示处理中的状态
@@ -53,28 +50,30 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
 
             // 开始轮询检查处理状态
-            const filename = data.download_url.split('/').pop();
-            checkStatus(filename);
-        })
-        .catch(error => {
+            if (data.download_url) {
+                const filename = data.download_url.split('/').pop();
+                checkStatus(filename);
+            } else {
+                throw new Error('服务器未返回有效的下载链接');
+            }
+
+        } catch (error) {
             console.error('处理过程中发生错误:', error);
             loadingDiv.style.display = 'none';
-            resultDiv.style.display = 'block';
             markdownContent.innerHTML = `<div class="error"><strong>错误:</strong> ${error.message}</div>`;
             downloadBtn.style.display = 'none';
-        });
+        }
     });
 
     function checkStatus(filename) {
-        const checkInterval = setInterval(() => {
-            fetch(`/check_ocr_status/${filename}`)
-            .then(response => {
+        const checkInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/check_ocr_status/${filename}`);
                 if (!response.ok) {
                     throw new Error('检查状态失败');
                 }
-                return response.json();
-            })
-            .then(data => {
+                const data = await response.json();
+                
                 if (data.status === 'completed') {
                     clearInterval(checkInterval);
                     loadingDiv.style.display = 'none';
@@ -89,10 +88,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.location.href = data.download_url;
                     };
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('检查状态时出错:', error);
-            });
+                markdownContent.innerHTML = `<div class="error"><strong>错误:</strong> ${error.message}</div>`;
+            }
         }, 2000); // 每2秒检查一次
 
         // 设置30分钟后停止检查
