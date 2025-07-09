@@ -1,5 +1,5 @@
 # ==============================================================================
-# Dockerfile for the Flask Toolbox App (Final Version)
+# Dockerfile for the Flask Toolbox App (Final Corrected Version)
 # ==============================================================================
 
 # 基础镜像保持不变
@@ -13,11 +13,12 @@ WORKDIR /app
 
 # --- START MODIFICATION ---
 # 核心步骤：安装所有必需的系统级依赖
-# 增加了字体相关的包，以确保 Office 文档能被正确渲染
-# - ttf-mscorefonts-installer: 包含 Times New Roman, Arial 等微软核心字体
-# - fonts-wqy-zenhei: 包含文泉驿正黑，一个高质量的开源中文字体
-# - fonts-noto-cjk: Google Noto 字体，覆盖中日韩字符
+# 修正：在安装前，先修改apt软件源配置，加入 contrib 和 non-free 源，以找到 ttf-mscorefonts-installer
 RUN apt-get update && \
+    apt-get install -y sed && \
+    sed -i 's/ main/ main contrib non-free non-free-firmware/g' /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && \
+    echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
     apt-get install -y --no-install-recommends \
     libreoffice \
     poppler-utils \
@@ -25,8 +26,6 @@ RUN apt-get update && \
     ttf-mscorefonts-installer \
     fonts-wqy-zenhei \
     fonts-noto-cjk \
-    && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
-    && apt-get install -y --no-install-recommends ttf-mscorefonts-installer \
     && rm -rf /var/lib/apt/lists/*
 # --- END MODIFICATION ---
 
