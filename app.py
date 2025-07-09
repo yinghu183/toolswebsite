@@ -161,6 +161,10 @@ def download_file(filename):
         logging.error(f"下载文件时出错: {str(e)}")
         return "文件下载失败", 404
 
+# 确保输出目录存在
+if not os.path.exists('output'):
+    os.makedirs('output')
+
 @app.route('/zerox_ocr', methods=['GET', 'POST', 'OPTIONS'])
 def zerox_ocr():
     if request.method == 'OPTIONS':
@@ -191,6 +195,9 @@ def zerox_ocr():
             filename = secure_filename(file.filename)
             unique_filename = f"{uuid.uuid4()}_{filename}"
             file_path = os.path.join('uploads', unique_filename)
+            
+            # 确保上传目录存在
+            os.makedirs('uploads', exist_ok=True)
             file.save(file_path)
             app.logger.info(f"Processing file: {file_path}")
 
@@ -199,7 +206,7 @@ def zerox_ocr():
                 app.logger.info(f"OCR result received successfully")
 
                 # 获取生成的markdown文件路径
-                output_dir = "./output"
+                output_dir = os.path.join(os.getcwd(), 'output')
                 markdown_files = [f for f in os.listdir(output_dir) if f.endswith('.md')]
                 if not markdown_files:
                     return jsonify({'error': '未找到生成的文件'}), 500
@@ -211,7 +218,7 @@ def zerox_ocr():
                 app.logger.info(f"Generated markdown file: {markdown_path}")
                 
                 # 返回文件下载链接
-                download_url = url_for('download_markdown', filename=latest_file)
+                download_url = url_for('download_markdown', filename=latest_file, _external=True)
                 return jsonify({
                     'success': True,
                     'message': 'OCR处理完成',
@@ -234,14 +241,23 @@ def zerox_ocr():
 @app.route('/download_markdown/<filename>')
 def download_markdown(filename):
     try:
-        return send_file(
-            os.path.join('output', filename),
+        file_path = os.path.join(os.getcwd(), 'output', filename)
+        if not os.path.exists(file_path):
+            app.logger.error(f"File not found: {file_path}")
+            return jsonify({'error': '文件不存在'}), 404
+            
+        response = send_file(
+            file_path,
             as_attachment=True,
             download_name=filename,
             mimetype='text/markdown'
         )
+        
+        return response
+        
     except Exception as e:
         app.logger.error(f"Error downloading file: {str(e)}")
+        app.logger.error(traceback.format_exc())
         return jsonify({'error': '文件下载失败'}), 404
 
 # 定期清理上传文件的函数（可以通过定时任务调用）
