@@ -37,31 +37,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const contentType = response.headers.get('content-type');
             console.log('Content-Type:', contentType);
 
+            // 获取响应文本
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+
             if (!response.ok) {
                 if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    console.log('Error response data:', errorData);
-                    throw new Error(errorData.error || '服务器处理失败');
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        throw new Error(errorData.error || '服务器处理失败');
+                    } catch (e) {
+                        throw new Error('服务器返回了无效的错误信息');
+                    }
                 } else {
-                    const text = await response.text();
-                    console.log('Error response text:', text);
                     throw new Error('服务器响应错误');
                 }
             }
 
             if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                console.log('Unexpected response text:', text);
                 throw new Error('服务器返回了非JSON格式的数据');
             }
 
+            if (!responseText) {
+                throw new Error('服务器返回了空响应');
+            }
+
             try {
-                const text = await response.text();
-                console.log('Response text:', text);
-                if (!text) {
-                    throw new Error('服务器返回了空响应');
-                }
-                return JSON.parse(text);
+                return JSON.parse(responseText);
             } catch (error) {
                 console.error('JSON parse error:', error);
                 throw new Error('JSON解析失败: ' + error.message);
