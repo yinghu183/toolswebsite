@@ -21,33 +21,40 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('file', fileInput.files[0]);
 
         loadingDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-        markdownContent.textContent = '';
+        resultDiv.style.display = 'block';  // 显示结果区域
+        markdownContent.innerHTML = '<div class="info">正在上传文件...</div>';
         downloadBtn.style.display = 'none';
 
         fetch('/zerox_ocr', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('服务器响应错误');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.error) {
                 throw new Error(data.error);
             }
 
-            if (data.success && data.download_url) {
-                markdownContent.innerHTML = `
-                    <div class="info">
-                        <p>${data.message}</p>
-                        <p>正在处理中，请稍候...</p>
-                    </div>
-                `;
-                
-                // 开始轮询检查处理状态
-                checkStatus(data.download_url.split('/').pop());
-            } else {
+            if (!data.success) {
                 throw new Error('处理失败，请重试');
             }
+
+            // 显示处理中的状态
+            markdownContent.innerHTML = `
+                <div class="info">
+                    <p>${data.message || '文件已上传，正在处理中...'}</p>
+                    <div class="spinner"></div>
+                </div>
+            `;
+
+            // 开始轮询检查处理状态
+            const filename = data.download_url.split('/').pop();
+            checkStatus(filename);
         })
         .catch(error => {
             console.error('处理过程中发生错误:', error);
@@ -61,12 +68,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function checkStatus(filename) {
         const checkInterval = setInterval(() => {
             fetch(`/check_ocr_status/${filename}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('检查状态失败');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 'completed') {
                     clearInterval(checkInterval);
                     loadingDiv.style.display = 'none';
-                    resultDiv.style.display = 'block';
                     markdownContent.innerHTML = `
                         <div class="success">
                             <p>OCR处理完成！</p>
@@ -89,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(checkInterval);
             if (loadingDiv.style.display !== 'none') {
                 loadingDiv.style.display = 'none';
-                resultDiv.style.display = 'block';
                 markdownContent.innerHTML = `
                     <div class="error">
                         <strong>错误:</strong> 处理时间过长，请刷新页面重试
