@@ -195,8 +195,21 @@ def zerox_ocr():
                     # 确保markdown_content是有效的字符串
                     markdown_content = markdown_content.replace('\x00', '')  # 移除空字符
                     
-                    app.logger.info("Markdown content generated successfully")
-                    return jsonify({'markdown': markdown_content}), 200
+                    # 记录要发送的内容
+                    app.logger.info("Generated markdown content length: %d", len(markdown_content))
+                    app.logger.debug("First 500 characters of markdown content: %s", markdown_content[:500])
+                    
+                    response_data = {'markdown': markdown_content}
+                    # 记录JSON序列化后的大小
+                    from flask import json
+                    json_response = json.dumps(response_data)
+                    app.logger.info("JSON response length: %d", len(json_response))
+                    
+                    app.logger.info("Sending response...")
+                    response = jsonify(response_data)
+                    response.headers['Content-Type'] = 'application/json'
+                    app.logger.info("Response prepared successfully")
+                    return response, 200
 
                 except Exception as e:
                     app.logger.error(f"Error generating markdown content: {str(e)}")
