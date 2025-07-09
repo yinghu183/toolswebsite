@@ -29,23 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData
         })
-        .then(async response => {
-            const contentType = response.headers.get('content-type');
-            const text = await response.text();
-            console.log('Response status:', response.status);
-            console.log('Content-Type:', contentType);
-            console.log('Response text:', text);
-
-            if (!response.ok) {
-                throw new Error(text);
-            }
-
-            try {
-                return JSON.parse(text);
-            } catch (error) {
-                throw new Error('服务器返回了无效的JSON数据');
-            }
-        })
+        .then(response => response.json())
         .then(data => {
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
