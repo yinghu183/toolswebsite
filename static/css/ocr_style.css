@@ -34,53 +34,51 @@ body {
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: 20px;
 }
 
-/* --- 统一工具页布局 --- */
-.tool-page-container {
+/* --- 主容器 --- */
+.ocr-container {
     width: 100%;
     max-width: 600px;
-}
-
-.tool-page-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.tool-page-header h1 {
-    font-size: 2.2rem;
-    color: var(--text-color);
-    margin-bottom: 8px;
-}
-
-.tool-page-header p {
-    font-size: 1rem;
-    color: var(--text-light-color);
-}
-
-.tool-content-wrapper {
     background-color: var(--card-background-color);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     padding: 30px 40px;
+    transition: all 0.3s ease-in-out;
 }
 
-/* --- 统一表单样式 --- */
-.new-input-group {
+/* --- Header --- */
+.ocr-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.ocr-header h1 {
+    font-size: 2rem;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.ocr-header p {
+    font-size: 1rem;
+    color: var(--text-light-color);
+}
+
+/* --- 表单样式 --- */
+.form-group {
     margin-bottom: 20px;
 }
 
-.new-input-group label {
+.form-group label {
     display: block;
     font-weight: 500;
     margin-bottom: 8px;
-    color: #495057;
 }
 
-.new-input-group input[type="text"],
-.new-input-group input[type="password"],
-.new-input-group input[type="file"] {
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="file"] {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border-color);
@@ -90,14 +88,18 @@ body {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.new-input-group input:focus {
+.form-group input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
 }
 
-/* --- 统一按钮样式 --- */
-.new-submit-btn, .new-secondary-btn {
+.form-group input[type="file"] {
+    cursor: pointer;
+}
+
+/* --- 按钮样式 --- */
+.button-primary, .button-secondary {
     display: block;
     width: 100%;
     padding: 12px;
@@ -106,57 +108,65 @@ body {
     font-size: 1.1rem;
     font-weight: 500;
     cursor: pointer;
-    text-align: center;
-    text-decoration: none;
     transition: background-color 0.2s, transform 0.1s;
 }
 
-.new-submit-btn {
+.button-primary {
     background-color: var(--primary-color);
     color: white;
 }
 
-.new-submit-btn:hover {
+.button-primary:hover {
     background-color: var(--primary-hover-color);
 }
 
-.new-submit-btn:active {
+.button-primary:active {
     transform: scale(0.98);
 }
 
-.new-secondary-btn {
+.button-secondary {
     background-color: var(--secondary-color);
     color: white;
 }
 
-.new-secondary-btn:hover {
+.button-secondary:hover {
     background-color: var(--secondary-hover-color);
 }
 
-
-/* --- 统一结果/状态容器 --- */
-.new-tool-result {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 30px;
+/* --- 状态切换逻辑 --- */
+.ocr-status {
+    display: none; /* 默认所有状态都隐藏 */
     text-align: center;
+    padding: 20px;
 }
 
-.result-state h2 {
+/* 当容器有 is-processing 类时，隐藏表单，显示处理中状态 */
+.ocr-container.is-processing .ocr-form-wrapper { display: none; }
+.ocr-container.is-processing .ocr-status-wrapper .ocr-processing { display: block; }
+
+/* 当容器有 is-successful 类时，隐藏表单，显示成功状态 */
+.ocr-container.is-successful .ocr-form-wrapper { display: none; }
+.ocr-container.is-successful .ocr-status-wrapper .ocr-success { display: block; }
+
+/* 当容器有 is-error 类时，隐藏表单，显示错误状态 */
+.ocr-container.is-error .ocr-form-wrapper { display: none; }
+.ocr-container.is-error .ocr-status-wrapper .ocr-error { display: block; }
+
+
+/* --- 状态内容样式 --- */
+.ocr-status h2 {
     font-size: 1.8rem;
     margin-bottom: 10px;
 }
-.result-state p {
+.ocr-status p {
     font-size: 1rem;
     color: var(--text-light-color);
     margin-bottom: 25px;
 }
-.result-state .status-subtext {
+.ocr-status .status-subtext {
     font-size: 0.9rem;
     margin-top: -15px;
 }
-
-/* --- OCR 特有元素样式 --- */
 
 /* Spinner 动画 */
 .spinner {
@@ -187,15 +197,16 @@ body {
 @media (max-width: 640px) {
     body {
         padding: 0;
-        align-items: stretch;
+        background-color: var(--card-background-color);
     }
-    .tool-content-wrapper {
+    .ocr-container {
+        max-width: 100%;
         box-shadow: none;
         padding: 20px;
         min-height: 100vh;
         border-radius: 0;
     }
-    .tool-page-header {
-        padding-top: 20px;
+    .ocr-header h1 {
+        font-size: 1.8rem;
     }
 }

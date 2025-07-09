@@ -1,82 +1,33 @@
 document.addEventListener('DOMContentLoaded', function() {
     // DOM 元素引用
-    const ocrForm = document.getElementById('ocrForm');
-    const resultContainer = document.getElementById('resultContainer');
-    
-    // 状态视图元素
-    const processingView = document.getElementById('ocr-processing');
-    const successView = document.getElementById('ocr-success');
-    const errorView = document.getElementById('ocr-error');
-    
-    // 动态内容元素
+    const container = document.getElementById('ocr-container');
+    const form = document.getElementById('ocrForm');
+    const resetBtn = document.getElementById('reset-btn');
+
+    // 状态元素引用
     const processingFilename = document.getElementById('processing-filename');
     const errorMessage = document.getElementById('error-message');
     const downloadBtn = document.getElementById('download-btn');
-    const resetBtn = document.getElementById('reset-btn');
 
     let processingInterval = null;
 
-    // --- 状态管理函数 ---
-    
-    // 显示特定状态视图
-    function showStateView(viewToShow) {
-        resultContainer.style.display = 'block';
-        ocrForm.style.display = 'none';
-        
-        // 隐藏所有状态视图
-        [processingView, successView, errorView].forEach(view => view.style.display = 'none');
-        
-        // 显示指定的状态视图
-        if (viewToShow) {
-            viewToShow.style.display = 'block';
-        }
-    }
-    
-    // 显示处理中状态
-    function showProcessingState(filename) {
-        processingFilename.textContent = filename;
-        showStateView(processingView);
-    }
-
-    // 显示成功状态
-    function showSuccessState() {
-        if (processingInterval) clearInterval(processingInterval);
-        showStateView(successView);
-    }
-    
-    // 显示错误状态
-    function showErrorState(message) {
-        if (processingInterval) clearInterval(processingInterval);
-        errorMessage.textContent = message;
-        showStateView(errorView);
-    }
-    
-    // 重置到初始状态
-    function resetToInitialState() {
-        resultContainer.style.display = 'none';
-        ocrForm.style.display = 'block';
-        ocrForm.reset();
-        if (processingInterval) clearInterval(processingInterval);
-    }
-
-
-    // --- 事件监听器 ---
-
     // 表单提交事件
-    ocrForm.addEventListener('submit', async function(event) {
+    form.addEventListener('submit', async function(event) {
         event.preventDefault();
 
         const fileInput = document.getElementById('document');
         if (!fileInput.files || fileInput.files.length === 0) {
-            alert('请选择一个文件。'); // 使用简单的alert提示
+            showError('请选择一个文件。');
             return;
         }
         
-        const formData = new FormData(ocrForm);
-        const filename = fileInput.files[0].name;
+        // 准备表单数据
+        const formData = new FormData(form);
+        formData.append('file', fileInput.files[0]);
 
         // 进入处理中状态
-        showProcessingState(filename);
+        processingFilename.textContent = fileInput.files[0].name;
+        setContainerState('processing');
 
         try {
             const response = await fetch('/zerox_ocr', {
@@ -96,34 +47,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (data.download_url) {
-                const taskFilename = data.download_url.split('/').pop();
-                startStatusCheck(taskFilename, data.download_url);
+                const filename = data.download_url.split('/').pop();
+                startStatusCheck(filename);
             } else {
                 throw new Error('服务器未返回有效的下载链接。');
             }
 
         } catch (error) {
             console.error('处理过程中发生错误:', error);
-            showErrorState(error.message);
+            showError(error.message);
         }
     });
 
     // 开始轮询检查状态
-    function startStatusCheck(filename, finalDownloadUrl) {
+    function startStatusCheck(filename) {
+        // 清除旧的定时器以防万一
         if (processingInterval) clearInterval(processingInterval);
 
         processingInterval = setInterval(async () => {
             try {
                 const response = await fetch(`/check_ocr_status/${filename}`);
                 if (!response.ok) {
+                    // 如果检查失败，继续轮询，不直接报错
                     console.error('检查状态失败，将在2秒后重试。');
                     return;
                 }
                 const data = await response.json();
                 
                 if (data.status === 'completed') {
-                    showSuccessState();
-                    setupDownloadButton(filename, finalDownloadUrl);
+                    clearInterval(processingInterval);
+                    setContainerState('successful');
+                    setupDownloadButton(filename, data.download_url);
                 }
                 // 如果状态是 'processing'，则什么都不做，等待下一次轮询
             } catch (error) {
@@ -137,11 +91,26 @@ document.addEventListener('DOMContentLoaded', function() {
             if (processingInterval) {
                 clearInterval(processingInterval);
                 // 检查是否仍处于处理中状态
-                if (processingView.style.display === 'block') {
-                    showErrorState('处理时间过长，请刷新页面重试。');
+                if (container.classList.contains('is-processing')) {
+                    showError('处理时间过长，请刷新页面重试。');
                 }
             }
         }, 30 * 60 * 1000);
+    }
+
+    // 设置容器状态的辅助函数
+    function setContainerState(state) {
+        container.classList.remove('is-processing', 'is-successful', 'is-error');
+        if (state) {
+            container.classList.add(`is-${state}`);
+        }
+    }
+
+    // 显示错误的辅助函数
+    function showError(message) {
+        if (processingInterval) clearInterval(processingInterval);
+        setContainerState('error');
+        errorMessage.textContent = message;
     }
     
     // 设置下载按钮
@@ -157,5 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 重试按钮事件
-    resetBtn.addEventListener('click', resetToInitialState);
+    resetBtn.addEventListener('click', () => {
+        setContainerState(null); // 移除所有状态类，回到初始表单状态
+        form.reset(); // 清空表单
+    });
 });
