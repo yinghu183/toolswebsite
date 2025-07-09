@@ -1,4 +1,8 @@
 from pyzerox import zerox
+# --- START MODIFICATION ---
+# 1. 导入我们要修改的类
+from pyzerox.models.modellitellm import litellmmodel
+# --- END MODIFICATION ---
 import os
 import asyncio
 import logging
@@ -9,6 +13,19 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 async def process_file(file_path, api_key, api_base, model):
+    
+    # --- START MODIFICATION ---
+    # 2. 定义一个什么都不做的“傀儡”验证函数
+    def do_nothing(self):
+        logger.debug("Skipping the original validate_model() check.")
+        pass
+
+    # 3. 保存原始的验证函数
+    original_validate_model = litellmmodel.validate_model
+    # 4. 用我们的“傀儡”替换掉原始的验证函数
+    litellmmodel.validate_model = do_nothing
+    # --- END MODIFICATION ---
+
     try:
         logger.debug(f"Starting to process file: {file_path}")
 
@@ -24,7 +41,6 @@ async def process_file(file_path, api_key, api_base, model):
         os.environ["OPENAI_API_KEY"] = api_key
         os.environ["OPENAI_API_BASE"] = api_base
         
-        # 为了通过对 Gemini 等模型的预检查，提供虚拟环境变量
         os.environ["VERTEXAI_PROJECT"] = "dummy-project"
         os.environ["VERTEXAI_LOCATION"] = "dummy-location"
 
@@ -41,21 +57,16 @@ async def process_file(file_path, api_key, api_base, model):
 
         logger.debug(f"Calling zerox with model: {model}")
         
-        # --- START MODIFICATION ---
-        # 终极解决方案：增加 is_vision_model=True 参数
-        # 这会强制 py-zerox 跳过内部的模型列表验证，
-        # 完全信任用户提供的模型是一个视觉模型。
+        # 5. 现在这个调用将不会再执行那个烦人的验证了
         result = await zerox(
             file_path=file_path,
             model=model,
-            is_vision_model=True, # <--- 关键的新增参数
             output_dir=output_dir,
             custom_system_prompt=custom_system_prompt,
             select_pages=select_pages,
             **kwargs
         )
-        # --- END MODIFICATION ---
-
+        
         logger.debug(f"Zerox result: pages={len(result.pages)}, completion_time={result.completion_time}")
         for i, page in enumerate(result.pages):
             logger.debug(f"Page {i+1} content length: {len(page.content)}")
@@ -66,6 +77,13 @@ async def process_file(file_path, api_key, api_base, model):
         logger.error(f"Error processing file: {str(e)}")
         logger.error(traceback.format_exc())
         raise
+    finally:
+        # --- START MODIFICATION ---
+        # 6. 无论成功还是失败，最后都把原始的验证函数恢复回去
+        # 这是一个好习惯，可以防止对程序的其他部分产生意想不到的影响
+        litellmmodel.validate_model = original_validate_model
+        logger.debug("Restored the original validate_model().")
+        # --- END MODIFICATION ---
 
 # process_file_sync 函数保持不变
 def process_file_sync(file_path, api_key, api_base, model, output_path):
@@ -73,7 +91,6 @@ def process_file_sync(file_path, api_key, api_base, model, output_path):
         output_dir = os.path.dirname(output_path)
         os.makedirs(output_dir, exist_ok=True)
 
-        # 注意：这里传递的 model 仍然是原始模型名，app.py中已经加了前缀
         result = asyncio.run(process_file(file_path, api_key, api_base, model))
         
         with open(output_path, 'w', encoding='utf-8') as f:
