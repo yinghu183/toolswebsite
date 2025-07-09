@@ -14,7 +14,27 @@ from pyzerox.core.types import ZeroxOutput
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+
+# 配置CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"]
+    }
+})
+
+# 添加响应头中间件
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    # 确保JSON响应的Content-Type正确
+    if request.endpoint == 'zerox_ocr' and request.method == 'POST':
+        response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    return response
 
 # 设置日志
 logging.basicConfig(level=logging.DEBUG)
@@ -141,12 +161,15 @@ def download_file(filename):
         logging.error(f"下载文件时出错: {str(e)}")
         return "文件下载失败", 404
 
-@app.route('/zerox_ocr', methods=['GET', 'POST'])
+@app.route('/zerox_ocr', methods=['GET', 'POST', 'OPTIONS'])
 def zerox_ocr():
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     if request.method == 'POST':
         if 'file' not in request.files:
             app.logger.error("No file part in the request")
-            return jsonify({'error': '没有上传文件'}), 400
+            return make_response(jsonify({'error': '没有上传文件'}), 400)
 
         file = request.files['file']
         api_key = request.form.get('apiKey')
@@ -154,7 +177,7 @@ def zerox_ocr():
         model = request.form.get('model')
 
         if not api_key or not model:
-            return jsonify({'error': 'API Key 和模型为必填项'}), 400
+            return make_response(jsonify({'error': 'API Key 和模型为必填项'}), 400)
         if not api_base:
             api_base = "https://api.openai.com/v1"  # 可设为默认
 
@@ -162,7 +185,7 @@ def zerox_ocr():
 
         if file.filename == '':
             app.logger.error("No selected file")
-            return jsonify({'error': '没有选择文件'}), 400
+            return make_response(jsonify({'error': '没有选择文件'}), 400)
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
@@ -174,7 +197,7 @@ def zerox_ocr():
             try:
                 result = process_file_sync(file_path, api_key, api_base, model)
                 app.logger.info(f"OCR result received successfully")
-                app.logger.debug(f"Raw OCR result: {result}")  # 添加原始结果日志
+                app.logger.debug(f"Raw OCR result: {result}")
 
                 # 处理completion_time
                 completion_time = float(result.completion_time)
@@ -206,31 +229,32 @@ def zerox_ocr():
                     
                     response_data = {'markdown': markdown_content}
                     # 记录JSON序列化后的大小
-                    from flask import json
-                    json_response = json.dumps(response_data, ensure_ascii=False)
-                    app.logger.info("JSON response length: %d", len(json_response))
-                    
-                    app.logger.info("Sending response...")
-                    response = make_response(json_response)
-                    response.headers['Content-Type'] = 'application/json; charset=utf-8'
+                    json_response = jsonify(response_data)
+                    json_response.headers['Content-Type'] = 'application/json; charset=utf-8'
                     app.logger.info("Response prepared successfully")
-                    return response
+                    return json_response
 
                 except Exception as e:
                     app.logger.error(f"Error generating markdown content: {str(e)}")
                     app.logger.error(traceback.format_exc())
-                    return jsonify({'error': f"生成markdown内容时出错 - {str(e)}"}), 500
+                    error_response = make_response(jsonify({'error': f"生成markdown内容时出错 - {str(e)}"}), 500)
+                    error_response.headers['Content-Type'] = 'application/json; charset=utf-8'
+                    return error_response
 
             except Exception as e:
                 app.logger.error(f"Error in zerox_ocr: {str(e)}")
                 app.logger.error(traceback.format_exc())
-                return jsonify({'error': f"处理文件时出错 - {str(e)}"}), 500
+                error_response = make_response(jsonify({'error': f"处理文件时出错 - {str(e)}"}), 500)
+                error_response.headers['Content-Type'] = 'application/json; charset=utf-8'
+                return error_response
             finally:
                 if os.path.exists(file_path):
                     os.remove(file_path)
         else:
             app.logger.error(f"Invalid file type: {file.filename}")
-            return jsonify({'error': '不支持的文件类型'}), 400
+            error_response = make_response(jsonify({'error': '不支持的文件类型'}), 400)
+            error_response.headers['Content-Type'] = 'application/json; charset=utf-8'
+            return error_response
 
     return render_template('zerox_ocr.html')
 
