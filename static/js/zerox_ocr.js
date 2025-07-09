@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error);
             }
 
-            // 显示处理中的状态
             markdownContent.innerHTML = `
                 <div class="info">
                     <p>${data.message || '文件已上传，正在处理中...'}</p>
@@ -49,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
-            // 开始轮询检查处理状态
             if (data.download_url) {
                 const filename = data.download_url.split('/').pop();
                 checkStatus(filename);
@@ -84,9 +82,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     `;
                     downloadBtn.style.display = 'inline-block';
+
+                    // --- START MODIFICATION ---
+                    // 修改 onclick 事件处理方式
                     downloadBtn.onclick = function() {
-                        window.location.href = data.download_url;
+                        // 1. 创建一个隐藏的 <a> 标签
+                        const link = document.createElement('a');
+                        link.href = data.download_url;
+
+                        // 2. 设置 download 属性，这是触发下载的关键
+                        link.setAttribute('download', filename);
+                        
+                        // 3. 将它添加到页面中（对用户不可见）
+                        document.body.appendChild(link);
+                        
+                        // 4. 用代码模拟点击这个链接
+                        link.click();
+                        
+                        // 5. 点击后，从页面中移除这个临时链接
+                        document.body.removeChild(link);
                     };
+                    // --- END MODIFICATION ---
+
                 }
             } catch (error) {
                 console.error('检查状态时出错:', error);
@@ -94,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 2000); // 每2秒检查一次
 
-        // 设置30分钟后停止检查
         setTimeout(() => {
             clearInterval(checkInterval);
             if (loadingDiv.style.display !== 'none') {
