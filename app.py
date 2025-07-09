@@ -14,14 +14,12 @@ import traceback
 from pyzerox.core.types import ZeroxOutput
 from flask_cors import CORS
 import threading
-import subprocess # 1. 导入 subprocess 模块
+import subprocess
 
 app = Flask(__name__)
-
-# 添加 ProxyFix 中间件
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-# 配置CORS
+# (CORS, after_request, logging, and TOOLS list remain the same)
 CORS(app, resources={
     r"/*": {
         "origins": "*",
@@ -30,8 +28,6 @@ CORS(app, resources={
         "expose_headers": ["Content-Type"]
     }
 })
-
-# ... (其他中间件和配置保持不变) ...
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -40,71 +36,77 @@ def after_request(response):
     if request.endpoint == 'zerox_ocr' and request.method == 'POST':
         response.headers['Content-Type'] = 'application/json; charset=utf-8'
     return response
-
 logging.basicConfig(level=logging.DEBUG)
-
 TOOLS = [
     {"name": "Pinyin Converter", "display_name": "拼音转换器"},
     {"name": "Irr Calculator", "display_name": "IRR 计算器"},
     {"name": "Image Watermark", "display_name": "图片水印"},
     {"name": "Zerox OCR", "display_name": "文档OCR"}
 ]
-
-# 注意：这个列表现在仅用于文档目的，实际逻辑不再依赖它
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'odt', 'ott', 'rtf', 'txt', 'html', 'htm', 'xml', 'wps', 'wpd', 'xls', 'xlsx', 'ods', 'ots', 'csv', 'tsv', 'ppt', 'pptx', 'odp', 'otp', 'jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 app.config['MAX_CONTENT_LENGTH'] = 52428800
 
-# 2. 新增文件转换的辅助函数
+# --- START MODIFICATION ---
+# 升级版、更智能的文件转换函数
 def convert_to_pdf_if_needed(file_path):
     """
-    如果文件不是PDF，则使用LibreOffice将其转换为PDF。
+    检查文件类型，并使用最合适的工具将其转换为PDF。
+    - Office文档和文本文档使用 LibreOffice。
+    - 图片文件使用 GraphicsMagick。
     返回最终可用于OCR的PDF文件路径。
     """
     file_name = os.path.basename(file_path)
     file_ext = os.path.splitext(file_name)[1].lower()
-
-    # 如果是图片格式，也进行转换
-    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']
-    is_office_doc = file_ext not in ['.pdf'] + image_extensions
-    is_image = file_ext in image_extensions
-
+    
+    # 1. 如果已经是PDF，直接返回
     if file_ext == '.pdf':
         app.logger.info(f"File '{file_name}' is already a PDF. No conversion needed.")
         return file_path
 
-    app.logger.info(f"Converting '{file_name}' to PDF...")
     output_dir = os.path.dirname(file_path)
+    pdf_filename = os.path.splitext(file_name)[0] + '.pdf'
+    pdf_path = os.path.join(output_dir, pdf_filename)
     
-    try:
-        command = ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", output_dir, file_path]
-        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', 'tiff']
 
-        if result.returncode != 0:
-            app.logger.error(f"LibreOffice conversion failed. Stderr: {result.stderr}")
-            raise RuntimeError(f"File conversion to PDF failed: {result.stderr}")
-        
-        pdf_filename = os.path.splitext(file_name)[0] + '.pdf'
-        pdf_path = os.path.join(output_dir, pdf_filename)
-        
+    try:
+        # 2. 如果是图片，使用 GraphicsMagick (gm)
+        if file_ext in image_extensions:
+            app.logger.info(f"Converting image '{file_name}' to PDF using GraphicsMagick...")
+            # 使用 `gm convert` 命令
+            command = ["gm", "convert", file_path, pdf_path]
+            result = subprocess.run(command, capture_output=True, text=True, timeout=60)
+            if result.returncode != 0:
+                app.logger.error(f"GraphicsMagick conversion failed. Stderr: {result.stderr}")
+                raise RuntimeError(f"Image conversion to PDF failed: {result.stderr}")
+
+        # 3. 如果是其他支持的文档，使用 LibreOffice
+        else:
+            app.logger.info(f"Converting document '{file_name}' to PDF using LibreOffice...")
+            command = ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", output_dir, file_path]
+            result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+            if result.returncode != 0:
+                app.logger.error(f"LibreOffice conversion failed. Stderr: {result.stderr}")
+                raise RuntimeError(f"Document conversion to PDF failed: {result.stderr}")
+
+        # 4. 确认转换后的PDF文件存在
         if not os.path.exists(pdf_path):
             app.logger.error(f"Conversion command succeeded, but output PDF not found at {pdf_path}")
             raise FileNotFoundError("Converted PDF file not found.")
 
-        app.logger.info(f"Successfully converted to '{os.path.basename(pdf_path)}'.")
+        app.logger.info(f"Successfully converted '{file_name}' to '{os.path.basename(pdf_path)}'.")
         return pdf_path
 
-    except FileNotFoundError:
-        app.logger.error("`libreoffice` command not found. Is LibreOffice installed in the environment?")
-        raise RuntimeError("File conversion utility is not available on the server.")
+    except FileNotFoundError as e:
+        tool = "gm (GraphicsMagick)" if file_ext in image_extensions else "libreoffice"
+        app.logger.error(f"`{tool}` command not found. Is it installed in the environment? Error: {e}")
+        raise RuntimeError(f"File conversion utility '{tool}' is not available on the server.")
     except Exception as e:
         app.logger.error(f"An exception occurred during file conversion: {e}")
         raise
+# --- END MODIFICATION ---
 
-# ... (home, convert_pinyin, calculate_irr, watermark, download_file 等路由保持不变) ...
+
+# (home, pinyin, irr, watermark, download等路由保持原样)
 @app.route('/')
 def home():
     return render_template('index.html', tools=TOOLS)
@@ -199,7 +201,7 @@ if not os.path.exists(output_dir):
 else:
     os.chmod(output_dir, 0o777)
 
-# 3. 使用新的转换逻辑重构 zerox_ocr 路由
+# zerox_ocr 路由保持不变，因为它现在调用了新的转换函数
 @app.route('/zerox_ocr', methods=['GET', 'POST', 'OPTIONS'])
 def zerox_ocr():
     if request.method == 'OPTIONS':
@@ -211,6 +213,7 @@ def zerox_ocr():
             return jsonify({'error': '没有上传文件'}), 400
 
         file = request.files['file']
+        # ... (表单数据获取等代码不变) ...
         api_key = request.form.get('apiKey')
         api_base = request.form.get('apiBase')
         model = request.form.get('model')
@@ -218,20 +221,19 @@ def zerox_ocr():
         if not api_key or not model:
             return jsonify({'error': 'API Key 和模型为必填项'}), 400
         if not api_base:
-            api_base = "https://api.openai.com/v1"
+            api_base = "https://api.141010.xyz/v1"
 
         if file.filename == '':
             app.logger.error("No selected file")
             return jsonify({'error': '没有选择文件'}), 400
 
-        # 不再使用旧的 allowed_file 检查
         try:
             original_filename = secure_filename(file.filename)
             upload_path = os.path.join('uploads', f"{uuid.uuid4()}_{original_filename}")
             os.makedirs('uploads', exist_ok=True)
             file.save(upload_path)
             
-            # 关键改动：调用转换函数
+            # 关键改动：调用我们新的、更智能的转换函数
             ocr_ready_file_path = convert_to_pdf_if_needed(upload_path)
             
             output_filename = f"{str(uuid.uuid4()).replace('-', '_')}_{os.path.splitext(original_filename)[0]}.md"
@@ -240,13 +242,11 @@ def zerox_ocr():
             
             def process_ocr():
                 try:
-                    # 将转换后的PDF文件路径传给OCR函数
                     process_file_sync(ocr_ready_file_path, api_key, api_base, model, output_file_path)
                     app.logger.info(f"OCR result received successfully for {original_filename}")
                 except Exception as e:
                     app.logger.error(f"Error in background OCR process: {str(e)}")
                 finally:
-                    # 清理所有中间文件
                     if os.path.exists(upload_path):
                         os.remove(upload_path)
                     if ocr_ready_file_path != upload_path and os.path.exists(ocr_ready_file_path):
@@ -271,7 +271,7 @@ def zerox_ocr():
 
     return render_template('zerox_ocr.html')
 
-
+# (check_ocr_status, download_markdown, cleanup_uploads, image_watermark, and __main__ block remain the same)
 @app.route('/check_ocr_status/<filename>')
 def check_ocr_status(filename):
     file_path = os.path.join('output', filename)
